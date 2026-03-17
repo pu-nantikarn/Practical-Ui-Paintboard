@@ -1,0 +1,670 @@
+/* ไฟล์: src/components/Sidebar.css */
+
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  /* ขยายความกว้างนิดนึงให้เหมือนรูป */
+  height: 100%;
+  background-color: #ffffff;
+  /* สีพื้นหลังสว่างสะอาดตา */
+  border-right: 1px solid #d6d6d6;
+  /* เปลี่ยนเป็นเส้นขอบเทาอ่อนๆ แทนสีฟ้า */
+  padding: 16px 16px;
+  /* ปรับช่องไฟให้พอดี */
+  box-sizing: border-box;
+  overflow: visible;
+  font-family: system-ui, sans-serif;
+  gap: 16px;
+  /* ระยะห่างระหว่าง 3 ส่วนหลัก (แทนเส้นประเดิม) */
+}
+
+/* ส่วนหัวข้อ */
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+
+/* ---------------------------
+   Section 1: Mood & Tone
+--------------------------- */
+.mood-section {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.mood-btn {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 6px 0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.mood-btn.active {
+  background-color: #d1d5db;
+  /* สีเทาอ่อนตอน active */
+  font-weight: 600;
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+.generate-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.generate-btn:hover {
+  background-color: #374151;
+}
+
+.gen-btn-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.shortcut-hint {
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* ---------------------------
+   Section 2: Palette
+--------------------------- */
+.palette-section {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 16px;
+  min-height: 0;
+}
+
+.color-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.secondary-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Input Wrapper & Logic */
+.input-wrapper {
+  position: relative;
+  /* สำคัญมาก: เพื่อให้ popover ลอยอ้างอิงจากกล่องนี้ */
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  /* เพิ่มความสูงนิดนึงให้วงกลมไม่แน่นไป */
+  background-color: #e5e7eb;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: visible;
+  /* ต้องแก้เป็น visible เพื่อให้ popover ล้นกรอบได้ */
+  box-sizing: border-box;
+  padding: 0 6px;
+  /* ขยับ padding ด้านใน */
+}
+
+.color-circle-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.color-circle-btn:hover {
+  transform: scale(1.05);
+}
+
+.hex-prefix {
+  margin-left: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.input-wrapper input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding-left: 4px;
+  padding-right: 80px;
+  /* เว้นที่ให้ไอคอน 3 ตัว */
+  font-size: 0.9rem;
+  font-weight: 500;
+  outline: none;
+  color: #1f2937;
+  text-transform: uppercase;
+}
+
+.input-wrapper input.locked-input {
+  color: #6b7280;
+}
+
+.action-group {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.action-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.action-icon:hover {
+  background-color: #d1d5db;
+  color: #000;
+}
+
+/* ช่องเส้นประ (Dashed Add Slot) */
+.dashed-add-slot {
+  height: 32px;
+  border: 1.5px dashed #d1d5db;
+  /* เส้นประสีเทาอ่อน */
+  background-color: #f9fafb;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+.dashed-add-slot:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* Neutral Boxes */
+.neutral-squares {
+  display: flex;
+  justify-content: space-between;
+}
+
+.neutral-box {
+  width: 24px;
+  height: 34px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.save-palette-btn {
+  width: 100%;
+  padding: 8px 0;
+  background-color: #f8f9fa;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: auto;
+}
+
+.save-palette-btn:hover {
+  background-color: #e5e7eb;
+}
+
+/* ---------------------------
+   Section 3: Picker Mockup
+--------------------------- */
+.picker-section {
+  display: flex;
+  gap: 12px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.picker-left {
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+}
+
+.picker-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 16px;
+  /* ดันลงมาให้ตรงกับกล่องใหญ่ */
+}
+
+.slider {
+  height: 10px;
+  border-radius: 5px;
+  position: relative;
+}
+
+.hue-slider {
+  background: linear-gradient(to right, red, orange, yellow, green, cyan, blue, violet, red);
+}
+
+.opacity-slider {
+  background: linear-gradient(to right, transparent, #a855f7), repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 10px 10px;
+  margin-top: 10px;
+}
+
+.slider-thumb {
+  position: absolute;
+  top: -3px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.opacity-tooltip {
+  position: absolute;
+  right: -5px;
+  top: 16px;
+  background-color: #1f2937;
+  color: white;
+  font-size: 0.6rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* ปุ่มและฟอร์แมต Segmented Control */
+.format-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pipette-btn {
+  background-color: #a1a1aa;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.format-tabs {
+  display: flex;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  padding: 2px;
+  flex: 1;
+}
+
+.format-tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.6rem;
+  font-weight: 500;
+  border-radius: 4px;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.format-tabs button.active {
+  background-color: #ffffff;
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.picker-input-wrapper {
+  margin-top: 6px;
+}
+
+.picker-input-wrapper input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  box-sizing: border-box;
+  color: #9ca3af;
+}
+
+.floating-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  padding: 12px;
+}
+
+/* 1. Popover: Color Picker (ขนาดเล็ก) */
+.picker-popover {
+  display: flex;
+  gap: 12px;
+  /* width: 360px;  */
+  /* height: 108px; */
+  box-sizing: border-box; 
+}
+
+.picker-left {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.current-color-swatch {
+  height: 12px;
+  width: 40px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.picker-color-box {
+  flex: 1;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.picker-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  /* สำคัญมาก: แก้บั๊ก Flexbox ดันกันจนทะลุกรอบ */
+}
+
+.picker-color-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  pointer-events: none;
+}
+
+.picker-thumb-2d {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5), inset 0 0 2px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 📍 แก้ไข Slider ให้ไม่ทะลุกรอบและเห็นเส้นสีชัดเจน */
+input[type=range].slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  margin: 4px 0;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+input[type=range].hue-slider {
+  background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%) !important;
+}
+
+/* ปุ่มรูดของ Slider */
+input[type=range].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #d1d5db;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+input[type=range].slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #d1d5db;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  background: #e5e7eb;
+  /* สีพื้นหลังกันเหนียว */
+  margin: 4px 0;
+}
+
+.hue-slider {
+  background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+}
+
+.opacity-slider {
+  background: linear-gradient(to right, #000, #fff);
+}
+
+.slider-thumb {
+  position: absolute;
+  top: -3px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #d1d5db;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #d1d5db;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.pipette-btn {
+  background: #9ca3af;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  /* padding: 2px 6px; */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pipette-btn:hover {
+  background: #6b7280;
+}
+
+.format-tabs {
+  display: flex;
+  background: #e5e7eb;
+  border-radius: 4px;
+  flex: 1;
+  padding: 2px;
+}
+
+.format-tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.65rem;
+  font-weight: 500;
+  border-radius: 4px;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.format-tabs button.active {
+  background: #fff;
+  color: #000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.picker-inputs {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.single-input, .multi-inputs {
+  display: flex;
+  width: 100%;
+}
+
+.multi-inputs {
+  gap: 6px;
+}
+
+.picker-inputs input {
+  width: 100%;
+  height: 28px; /* บังคับความสูงเท่ากันเป๊ะ */
+  padding: 0 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  box-sizing: border-box; /* สำคัญ: ป้องกัน Padding ดันกล่องทะลุ */
+  color: #4b5563;
+  text-align: center;
+}
+
+.multi-inputs {
+  display: flex;
+  gap: 6px;
+}
+
+.multi-inputs input {
+  flex: 1; /* ให้ 3 ช่องแบ่งสัดส่วนเท่าๆ กัน */
+  width: auto; /* 📍 ยกเลิก width 100% จากตัวบน เพื่อให้ flex ทำงานได้สมบูรณ์ */
+  min-width: 0; 
+  -moz-appearance: textfield;
+}
+
+.multi-inputs input::-webkit-outer-spin-button,
+.multi-inputs input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 2. Popover: Gradient Grid (3x4) */
+.gradient-popover {
+  width: 280px;
+  padding: 8px;
+}
+
+.shades-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.shade-cell {
+  position: relative;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.shade-text {
+  position: absolute;
+  bottom: 4px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.shade-text.always-visible {
+  opacity: 1;
+}
+
+.shade-cell:hover .shade-text {
+  opacity: 1;
+}
+
+.active-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.empty-cell {
+  background: transparent;
+  border: none;
+}

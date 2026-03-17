@@ -1,12 +1,10 @@
-// ไฟล์: src/components/Navbar.js
-import React, { useState } from 'react';
+// ไฟล์: src/frontend/Navbar.js (หรือ src/components/Navbar.js ตามที่คุณตั้งไว้)
+import React from 'react'; // 📍 ไม่ต้องใช้ useState ในหน้านี้แล้ว
 import { Eye, Moon, User } from 'lucide-react';
 import './Navbar.css';
 
-const Navbar = () => {
-    // สร้าง State ไว้เก็บว่าตอนนี้ผู้ใช้เลือกโหมดไหนอยู่ (Generate หรือ Image)
-    const [activeMode, setActiveMode] = useState('Generate');
-
+// 📍 รับค่า activeTab และ setActiveTab ที่ส่งมาจาก App.js
+const Navbar = ({ activeTab, setActiveTab }) => {
     return (
         <nav className="navbar">
             {/* โซนซ้าย: โลโก้แบรนด์ */}
@@ -17,18 +15,18 @@ const Navbar = () => {
             {/* โซนกลาง: สวิตช์สลับโหมด */}
             <div className="navbar-center">
                 <div className="toggle-container">
-                    {/* 📍 เพิ่มก้อนสีขาวสำหรับสไลด์ตรงนี้ */}
-                    <div className={`slide-bg ${activeMode === 'Image' ? 'slide-right' : ''}`}></div>
+                    {/* 📍 ใช้ activeTab แทน activeMode เพื่อให้ซิงค์กับ App.js */}
+                    <div className={`slide-bg ${activeTab === 'Image' ? 'slide-right' : ''}`}></div>
 
                     <button
-                        className={`toggle-btn ${activeMode === 'Generate' ? 'active' : ''}`}
-                        onClick={() => setActiveMode('Generate')}
+                        className={`toggle-btn ${activeTab === 'Generate' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('Generate')}
                     >
                         Generate
                     </button>
                     <button
-                        className={`toggle-btn ${activeMode === 'Image' ? 'active' : ''}`}
-                        onClick={() => setActiveMode('Image')}
+                        className={`toggle-btn ${activeTab === 'Image' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('Image')}
                     >
                         Image
                     </button>

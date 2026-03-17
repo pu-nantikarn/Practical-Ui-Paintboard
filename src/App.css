@@ -1,38 +1,62 @@
-.App {
-  text-align: center;
+/* ไฟล์: src/App.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; 
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* 📍 กล่องคลุมทั้งแอป เรียงจาก บนลงล่าง (Column) */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f3f4f6;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* 📍 พื้นที่ด้านล่าง Navbar แบ่ง ซ้าย-ขวา (Row) */
+.main-content {
+  display: flex;
+  flex: 1; /* กินความสูงที่เหลือจาก Navbar ทั้งหมด */
+  overflow: hidden; /* ป้องกัน Scrollbar ทะลุกรอบ */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* 📍 พื้นที่แสดงผลด้านขวา */
+.workspace {
+  flex: 1; /* กินความกว้างที่เหลือจาก Sidebar */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  padding: 24px;
+}
+
+/* กลุ่มปุ่มจำลองประเภท UI */
+.workspace-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.preview-btn {
+  padding: 8px 24px;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.preview-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.preview-btn.active {
+  background-color: #4b5563;
   color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  border-color: #4b5563;
 }

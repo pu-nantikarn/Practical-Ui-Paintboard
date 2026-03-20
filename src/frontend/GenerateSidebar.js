@@ -1,7 +1,10 @@
-// ไฟล์: src/components/Sidebar.js
+// ไฟล์: src/components/Sidebar.js (หรือ src/frontend/GenerateSidebar.js)
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Unlock, Minus, Plus, Palette, Pipette } from 'lucide-react';
 import './GenerateSidebar.css';
+import { supabase } from '../backend/supabaseClient';
+// 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
+import SavePalette from '../frontend/SavePalette';
 
 // ==========================================
 // 🛠️ Color Math Helpers (สมการคำนวณสีระดับโปร)
@@ -12,7 +15,6 @@ const getContrastColor = (hex) => {
   return (((r * 299) + (g * 587) + (b * 114)) / 1000) >= 128 ? '#000000' : '#FFFFFF';
 };
 
-// แปลงข้ามไปมาระหว่าง RGB, HEX, HSV และ HSL
 const hexToRgb = (hex) => {
   let v = hex.replace('#', '');
   if (v.length === 3) v = v.split('').map(c => c + c).join('');
@@ -112,7 +114,6 @@ const generateShades = (baseHex) => {
 const FloatingPicker = ({ hex, onChange }) => {
   const [format, setFormat] = useState('HEX');
   const boxRef = useRef(null);
-
   const [localHsv, setLocalHsv] = useState({ h: 0, s: 0, v: 1 });
 
   useEffect(() => {
@@ -201,8 +202,6 @@ const FloatingPicker = ({ hex, onChange }) => {
             onChange(hsvToHex(newH, localHsv.s, localHsv.v));
           }} />
 
-        {/* 📍 สไลด์ Lightness ถูกเอาออกไปแล้วตามที่ต้องการ */}
-
         <div className="format-controls">
           <button className="pipette-btn" onClick={handleEyeDropper} title="ดูดสี"><Pipette size={14} /></button>
           <div className="format-tabs">
@@ -256,17 +255,59 @@ const FloatingGradient = ({ baseHex }) => (
 );
 
 // ==========================================
-// 🎨 Component หลัก (Sidebar)
+// 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
 const Sidebar = () => {
-  const [activeMood, setActiveMood] = useState('Random');
   const moods = ['Random', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset', 'Futuristic'];
 
-  const [primary, setPrimary] = useState({ value: '8B5CF6', isLocked: false });
-  const [secondary, setSecondary] = useState([{ id: 1, value: '1F2937', isLocked: false }]);
-  const [openPopover, setOpenPopover] = useState({ type: null, id: null });
+  // --- 1. State ของสี และการจดจำค่า (localStorage) ---
+  const [activeMood, setActiveMood] = useState(() => {
+    const saved = localStorage.getItem('genMood');
+    return saved ? saved : 'Random';
+  });
 
+  const [primary, setPrimary] = useState(() => {
+    const saved = localStorage.getItem('genPrimary');
+    return saved ? JSON.parse(saved) : { value: '8B5CF6', isLocked: false };
+  });
+
+  const [secondary, setSecondary] = useState(() => {
+    const saved = localStorage.getItem('genSecondary');
+    return saved ? JSON.parse(saved) : [{ id: 1, value: '1F2937', isLocked: false }];
+  });
+
+  const [openPopover, setOpenPopover] = useState({ type: null, id: null });
   const neutralShades = generateShades('6B7280');
+
+  // 📍 2. State ควบคุมหน้าต่าง Save Palette
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
+    });
+  }, []);
+
+  // 📍 3. ดึงค่าสีทั้งหมดมารวมกันเป็น Array เพื่อส่งไปแสดงในพรีวิวของ Modal
+  const currentColors = [
+    primary.value, 
+    ...secondary.map(s => s.value)
+  ].filter(Boolean); // กรองค่าว่างออก
+
+  const [userId, setUserId] = useState(null);
+
+  // --- 4. useEffect สำหรับ Auto-Save ลงเบราว์เซอร์ ---
+  useEffect(() => {
+    localStorage.setItem('genMood', activeMood);
+  }, [activeMood]);
+
+  useEffect(() => {
+    localStorage.setItem('genPrimary', JSON.stringify(primary));
+  }, [primary]);
+
+  useEffect(() => {
+    localStorage.setItem('genSecondary', JSON.stringify(secondary));
+  }, [secondary]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -278,6 +319,7 @@ const Sidebar = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // --- 5. ฟังก์ชันจัดการสี ---
   const handleHexInput = (val, callback) => {
     const validHex = val.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6).toUpperCase();
     callback(validHex);
@@ -354,8 +396,23 @@ const Sidebar = () => {
             <div className="shade-cell empty-cell"></div>
           </div>
         </div>
-        <button className="save-palette-btn">Save Palette</button>
+
+        {/* 📍 ปุ่ม Save Palette กดแล้วเปิดหน้าต่าง Modal */}
+        <button 
+          className="save-palette-btn" 
+          onClick={() => setIsSaveModalOpen(true)}
+        >
+          Save Palette
+        </button>
       </div>
+
+      {/* 📍 เรียกใช้งาน Component หน้าต่าง SavePaletteModal */}
+      <SavePalette
+          isOpen={isSaveModalOpen} 
+          onClose={() => setIsSaveModalOpen(false)} 
+          colors={currentColors}
+          userId={userId}
+      />
     </aside>
   );
 };

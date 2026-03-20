@@ -4,19 +4,14 @@
   display: flex;
   flex-direction: column;
   width: 400px;
-  /* ขยายความกว้างนิดนึงให้เหมือนรูป */
   height: 100%;
   background-color: #ffffff;
-  /* สีพื้นหลังสว่างสะอาดตา */
   border-right: 1px solid #d6d6d6;
-  /* เปลี่ยนเป็นเส้นขอบเทาอ่อนๆ แทนสีฟ้า */
   padding: 16px 16px;
-  /* ปรับช่องไฟให้พอดี */
   box-sizing: border-box;
   overflow: visible;
   font-family: system-ui, sans-serif;
   gap: 16px;
-  /* ระยะห่างระหว่าง 3 ส่วนหลัก (แทนเส้นประเดิม) */
 }
 
 /* ส่วนหัวข้อ */

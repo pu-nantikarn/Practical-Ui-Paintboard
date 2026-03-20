@@ -1,0 +1,172 @@
+/* ไฟล์: src/frontend/SavePaletteModal.css */
+
+.save-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.save-modal-content {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 450px; /* ขนาดกำลังดี ไม่กว้างเกินไป */
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.save-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+/* --- แถบพรีวิวสี --- */
+.color-preview-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.color-preview-bar {
+  display: flex;
+  width: 250px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden; /* ให้ขอบมนตัดสีที่ล้น */
+}
+
+.color-preview-block {
+  flex: 1;
+  height: 100%;
+}
+
+/* --- ช่องกรอกชื่อ --- */
+.palette-name-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border: 1px solid #71717a; /* สีเทาเข้มแบบในรูป */
+  border-radius: 6px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.palette-name-input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+/* --- เส้นคั่น --- */
+.save-modal-divider {
+  height: 1px;
+  background-color: #d1d5db;
+  margin: 0 -24px 20px -24px; /* ให้เส้นยาวทะลุขอบซ้ายขวา */
+}
+
+/* --- ส่วนเลือกคอลเลกชัน --- */
+.collection-section-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.collection-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* ระยะห่างระหว่างแต่ละแถบ */
+    margin-bottom: 24px;
+    max-height: 200px;
+    overflow-y: auto; /* เผื่อกรณีมีคอลเลกชันเยอะให้เลื่อนดูได้ */
+}
+
+.collection-bar-save {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #a3a3a3; /* สีเทาตามรูป */
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+/* เอฟเฟกต์ตอนเอาเมาส์ชี้ */
+.collection-bar-save:hover {
+    background-color: #8c8c8c; 
+}
+
+/* เอฟเฟกต์ตอนถูก "คลิกเลือก" (Selected) */
+.collection-bar-save.selected {
+    background-color: #f3f4f6; /* เปลี่ยนเป็นสีสว่าง */
+    border: 2px solid #111; /* มีขอบสีดำให้รู้ว่าถูกเลือก */
+}
+
+.collection-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #a3a3a3; /* สีเทาตามแบบ */
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.collection-item:hover {
+  background-color: #8b8b8b;
+}
+
+.collection-item.selected {
+  background-color: #525252; /* ถ้าเลือกให้เป็นสีเทาเข้ม */
+  border-color: #000;
+}
+
+/* --- ปุ่มกดด้านล่าง --- */
+.save-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 12px;
+  background-color: transparent;
+  border: 1px solid #000;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+}
+
+.btn-save-new {
+  flex: 1;
+  padding: 12px;
+  background-color: #525252; /* สีเทาเข้มแบบในรูป */
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+}
+
+.btn-save-new:hover {
+  background-color: #3f3f46;
+}

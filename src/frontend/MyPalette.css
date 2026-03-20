@@ -75,13 +75,14 @@
 /* --- การ์ดจานสี (Palette Card) ---[cite: 5] */
 .palette-card {
   display: flex;
-  justify-content: space-between;
-  align-items: stretch; /* ให้กล่องซ้ายขวาสูงเท่ากัน */
+  justify-content: space-between; /* ดันเนื้อหาฝั่งซ้ายและขวาให้แยกออกจากกัน */
+  align-items: stretch;
   border: 1px solid #d1d5db;
   border-radius: 12px;
-  padding: 16px 20px; /* เพิ่มพื้นที่ด้านข้างเล็กน้อย */
-  margin-bottom: 12px;
+  padding: 16px 24px; /* เพิ่ม padding ด้านข้างให้ดูโปร่งขึ้น */
   background-color: #ffffff;
+  width: 600px; /* 📍 บังคับให้กว้างเต็ม 100% */
+  box-sizing: border-box; /* ป้องกันขอบล้นจาก padding */
 }
 
 .palette-card:hover {
@@ -161,7 +162,7 @@
 .palette-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 16px;
     margin-top: 15px;
 }
 

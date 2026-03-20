@@ -1,19 +1,23 @@
 /* ไฟล์: src/components/Sidebar.css */
 
+/* ไฟล์: src/components/Sidebar.css */
+
 .sidebar-container {
   display: flex;
   flex-direction: column;
   width: 400px;
-  height: 100%;
+  
+  /* 📍 เปลี่ยนตรงนี้จาก 100vh กลับมาเป็น 100% ครับ */
+  height: 100%; 
+  
   background-color: #ffffff;
   border-right: 1px solid #d6d6d6;
-  padding: 16px 16px;
+  padding: 16px;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   font-family: system-ui, sans-serif;
   gap: 16px;
 }
-
 /* ส่วนหัวข้อ */
 .section-title {
   font-size: 0.85rem;
@@ -28,7 +32,7 @@
 .mood-section {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex-shrink: 0; /* ห้ามหด */
 }
 
 .mood-grid {
@@ -50,7 +54,6 @@
 
 .mood-btn.active {
   background-color: #d1d5db;
-  /* สีเทาอ่อนตอน active */
   font-weight: 600;
   color: #1f2937;
   border-color: #d1d5db;
@@ -81,22 +84,29 @@
   font-weight: 600;
 }
 
-.shortcut-hint {
-  font-size: 0.6rem;
-  font-weight: 400;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
 /* ---------------------------
-   Section 2: Palette
+   Section 2: Palette (สีต่างๆ)
 --------------------------- */
 .palette-section {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  flex: 1; /* ดันให้กินพื้นที่ที่เหลือทั้งหมด */
+  min-height: 0; /* 📍 โค้ดพระเอก: บังคับให้เกิด Scrollbar ไม่ทะลุจอ */
+  overflow-y: auto; /* 📍 โค้ดพระเอก: เปิดโหมด Scroll */
   gap: 16px;
-  min-height: 0;
+  padding-right: 4px; /* เว้นที่ให้ Scrollbar ไม่ทับเนื้อหา */
+}
+
+/* แต่ง Scrollbar ให้ดูดี */
+.palette-section::-webkit-scrollbar {
+  width: 6px;
+}
+.palette-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+.palette-section::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 4px;
 }
 
 .color-group {
@@ -113,20 +123,16 @@
 /* Input Wrapper & Logic */
 .input-wrapper {
   position: relative;
-  /* สำคัญมาก: เพื่อให้ popover ลอยอ้างอิงจากกล่องนี้ */
   display: flex;
   align-items: center;
   width: 100%;
   height: 36px;
-  /* เพิ่มความสูงนิดนึงให้วงกลมไม่แน่นไป */
   background-color: #e5e7eb;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   overflow: visible;
-  /* ต้องแก้เป็น visible เพื่อให้ popover ล้นกรอบได้ */
   box-sizing: border-box;
   padding: 0 6px;
-  /* ขยับ padding ด้านใน */
 }
 
 .color-circle-btn {
@@ -158,7 +164,6 @@
   border: none;
   padding-left: 4px;
   padding-right: 80px;
-  /* เว้นที่ให้ไอคอน 3 ตัว */
   font-size: 0.9rem;
   font-weight: 500;
   outline: none;
@@ -195,7 +200,6 @@
 .dashed-add-slot {
   height: 32px;
   border: 1.5px dashed #d1d5db;
-  /* เส้นประสีเทาอ่อน */
   background-color: #f9fafb;
   border-radius: 4px;
   display: flex;
@@ -224,16 +228,23 @@
   box-sizing: border-box;
 }
 
+/* ---------------------------
+   Section 3: ปุ่ม Save Palette (ล็อกล่างสุด)
+--------------------------- */
 .save-palette-btn {
   width: 100%;
-  padding: 8px 0;
+  padding: 10px 0;
   background-color: #f8f9fa;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: auto;
+  
+  /* 📍 โค้ดสำหรับล็อกปุ่มให้อยู่ล่างสุดเสมอ */
+  margin-top: auto; 
+  flex-shrink: 0; 
+  /* ลบ position: sticky ออกไป เพราะใช้ Flexbox แทนแล้ว */
 }
 
 .save-palette-btn:hover {
@@ -241,7 +252,7 @@
 }
 
 /* ---------------------------
-   Section 3: Picker Mockup
+   Section 4: Picker Mockup
 --------------------------- */
 .picker-section {
   display: flex;
@@ -262,7 +273,6 @@
   flex-direction: column;
   justify-content: space-between;
   padding-top: 16px;
-  /* ดันลงมาให้ตรงกับกล่องใหญ่ */
 }
 
 .slider {
@@ -377,8 +387,6 @@
 .picker-popover {
   display: flex;
   gap: 12px;
-  /* width: 360px;  */
-  /* height: 108px; */
   box-sizing: border-box; 
 }
 
@@ -412,7 +420,6 @@
   justify-content: space-between;
   width: 100%;
   min-width: 0;
-  /* สำคัญมาก: แก้บั๊ก Flexbox ดันกันจนทะลุกรอบ */
 }
 
 .picker-color-overlay {
@@ -434,7 +441,6 @@
   z-index: 2;
 }
 
-/* 📍 แก้ไข Slider ให้ไม่ทะลุกรอบและเห็นเส้นสีชัดเจน */
 input[type=range].slider {
   -webkit-appearance: none;
   width: 100%;
@@ -450,7 +456,6 @@ input[type=range].hue-slider {
   background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%) !important;
 }
 
-/* ปุ่มรูดของ Slider */
 input[type=range].slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -480,7 +485,6 @@ input[type=range].slider::-moz-range-thumb {
   border-radius: 6px;
   outline: none;
   background: #e5e7eb;
-  /* สีพื้นหลังกันเหนียว */
   margin: 4px 0;
 }
 
@@ -530,7 +534,6 @@ input[type=range].slider::-moz-range-thumb {
   color: white;
   border: none;
   border-radius: 6px;
-  /* padding: 2px 6px; */
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -582,12 +585,12 @@ input[type=range].slider::-moz-range-thumb {
 
 .picker-inputs input {
   width: 100%;
-  height: 28px; /* บังคับความสูงเท่ากันเป๊ะ */
+  height: 28px; 
   padding: 0 6px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.75rem;
-  box-sizing: border-box; /* สำคัญ: ป้องกัน Padding ดันกล่องทะลุ */
+  box-sizing: border-box; 
   color: #4b5563;
   text-align: center;
 }
@@ -598,8 +601,8 @@ input[type=range].slider::-moz-range-thumb {
 }
 
 .multi-inputs input {
-  flex: 1; /* ให้ 3 ช่องแบ่งสัดส่วนเท่าๆ กัน */
-  width: auto; /* 📍 ยกเลิก width 100% จากตัวบน เพื่อให้ flex ทำงานได้สมบูรณ์ */
+  flex: 1; 
+  width: auto; 
   min-width: 0; 
   -moz-appearance: textfield;
 }

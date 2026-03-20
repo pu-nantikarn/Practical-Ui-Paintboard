@@ -2,84 +2,116 @@
 /* 📍 ลบโค้ด Palette ซ้ำซ้อนออกทั้งหมด ป้องกัน CSS ตีกัน */
 
 .import-section {
-  display: flex;
-  flex-direction: column;
-
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    margin-bottom: 16px;
 }
 
 .image-import-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 
-  border: 1.5px dashed #d1d5db;
-  border-radius: 6px;
-  background-color: #ffffff;
-  cursor: pointer;
-  overflow: hidden;
-  position: relative;
-  transition: border-color 0.2s;
+    /* 📍 กำหนดความสูงแบบตายตัว หรือ Max-Height เพื่อไม่ให้กล่องยืดตามรูปมากเกินไป */
+    height: 180px;
+
+    border: 1.5px dashed #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s
 }
 
 .image-import-box:hover {
-  border-color: #9ca3af;
+    border-color: #9ca3af;
 }
 
 .import-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #6b7280;
-  padding: 47px ;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #6b7280;
+    padding: 20px;
+    /* ลด Padding ลงจาก 47px เพื่อให้กล่องไม่สูงเกินความจำเป็น */
+    width: 100%;
+    height: 100%;
+    /* ให้เนื้อหาเต็มกล่องที่กำหนดความสูงไว้ */
 }
 
 .import-icon {
-  margin-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .import-text-main {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
 }
 
 .import-text-sub {
-  font-size: 0.8rem;
-  color: #9ca3af;
+    font-size: 0.8rem;
+    color: #9ca3af;
 }
 
 .preview-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 /* ปุ่มดูดสี (Manual Pick) */
 .manual-pick-btn {
-  width: 100%;
-  padding: 10px;
-  background-color: #4b5563;
-  color: white;
-  border-radius: 6px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    width: 100%;
+    padding: 10px;
+    background-color: #4b5563;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .manual-pick-btn:hover:not(:disabled) {
-  background-color: #374151;
+    background-color: #374151;
 }
 
 .manual-pick-btn:disabled {
-  background-color: #d1d5db;
-  cursor: not-allowed;
+    background-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+.sidebar-container.image-mode-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* บังคับให้สูงเต็มจอของ Sidebar */
+    overflow: hidden; /* ป้องกันไม่ให้ Sidebar หลักเกิด Scrollbar */
+}
+
+.image-mode-sidebar .palette-section {
+    flex: 1; /* ดันให้กินพื้นที่ที่เหลือทั้งหมด */
+    overflow-y: auto; /* 📍 ถ้าสีเยอะ จะเลื่อนเฉพาะตรงส่วนของสีได้ */
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 3. ยึดปุ่ม Save Palette ไว้ด้านล่างเสมอ (ทางเลือก) --- */
+/* ถ้าต้องการให้ปุ่มลอยอยู่ล่างสุดตลอดเวลา ไม่กลืนหายไปตอน Scroll */
+.image-mode-sidebar .save-palette-btn {
+    margin-top: auto; /* ดันปุ่มไปอยู่ล่างสุดของ container เสมอ */
+    flex-shrink: 0; /* ป้องกันปุ่มโดนบีบ */
+    position: sticky; /* ทำให้ปุ่มลอยติดขอบล่าง */
+    bottom: 0;
+    z-index: 10;
 }

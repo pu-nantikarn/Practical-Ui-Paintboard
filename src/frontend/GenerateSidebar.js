@@ -1,6 +1,6 @@
 // ไฟล์: src/components/Sidebar.js (หรือ src/frontend/GenerateSidebar.js)
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, Minus, Plus, Palette, Pipette } from 'lucide-react';
+import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy } from 'lucide-react';
 import './GenerateSidebar.css';
 import { supabase } from '../backend/supabaseClient';
 // 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
@@ -108,6 +108,8 @@ const generateShades = (baseHex) => {
   return shades;
 };
 
+
+
 // ==========================================
 // 🎨 Component ย่อย: หน้าต่าง Color Picker 
 // ==========================================
@@ -174,28 +176,28 @@ const FloatingPicker = ({ hex, onChange }) => {
     <div className="floating-popover picker-popover" onClick={e => e.stopPropagation()}>
       <div className="picker-left">
         <div className="current-color-swatch" style={{ backgroundColor: `#${hex}` }}></div>
-        
-        <div 
-          className="picker-color-box" 
+
+        <div
+          className="picker-color-box"
           ref={boxRef}
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
           style={{ background: `hsl(${localHsv.h}, 100%, 50%)` }}
         >
           <div className="picker-color-overlay"></div>
-          <div 
-            className="picker-thumb-2d" 
-            style={{ 
-              left: `${localHsv.s * 100}%`, 
+          <div
+            className="picker-thumb-2d"
+            style={{
+              left: `${localHsv.s * 100}%`,
               top: `${(1 - localHsv.v) * 100}%`,
-              backgroundColor: `#${hsvToHex(localHsv.h, localHsv.s, localHsv.v)}` 
+              backgroundColor: `#${hsvToHex(localHsv.h, localHsv.s, localHsv.v)}`
             }}
           ></div>
         </div>
       </div>
-      
+
       <div className="picker-controls">
-        <input type="range" className="slider hue-slider" min="0" max="360" value={localHsv.h} 
+        <input type="range" className="slider hue-slider" min="0" max="360" value={localHsv.h}
           onChange={(e) => {
             const newH = parseInt(e.target.value);
             setLocalHsv(prev => ({ ...prev, h: newH }));
@@ -240,11 +242,17 @@ const FloatingPicker = ({ hex, onChange }) => {
   );
 };
 
-const FloatingGradient = ({ baseHex }) => (
+const FloatingGradient = ({ baseHex, onCopy }) => (
   <div className="floating-popover gradient-popover" onClick={e => e.stopPropagation()}>
     <div className="shades-grid">
       {generateShades(baseHex).map((shade, index) => (
-        <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}` }}>
+        <div
+          key={index}
+          className="shade-cell"
+          style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} // 📍 เพิ่ม cursor
+          onClick={(e) => onCopy(e, shade)} // 📍 เพิ่ม onClick สำหรับ Copy
+          title={`Click to copy: #${shade}`}
+        >
           <span className="shade-text" style={{ color: getContrastColor(shade) }}>#{shade}</span>
           {shade === baseHex && <div className="active-dot" style={{ backgroundColor: getContrastColor(shade) }}></div>}
         </div>
@@ -257,7 +265,7 @@ const FloatingGradient = ({ baseHex }) => (
 // ==========================================
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
-const Sidebar = () => {
+const GenerateSidebar = () => {
   const moods = ['Random', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset', 'Futuristic'];
 
   // --- 1. State ของสี และการจดจำค่า (localStorage) ---
@@ -290,7 +298,7 @@ const Sidebar = () => {
 
   // 📍 3. ดึงค่าสีทั้งหมดมารวมกันเป็น Array เพื่อส่งไปแสดงในพรีวิวของ Modal
   const currentColors = [
-    primary.value, 
+    primary.value,
     ...secondary.map(s => s.value)
   ].filter(Boolean); // กรองค่าว่างออก
 
@@ -337,6 +345,16 @@ const Sidebar = () => {
   const handleAddSecondary = () => { if (secondary.length < 5) setSecondary(prev => [...prev, { id: Date.now(), value: '000000', isLocked: false }]); };
   const handleRemoveSecondary = (id) => { setSecondary(prev => prev.filter(s => s.id !== id)); if (openPopover.id === id) setOpenPopover({ type: null, id: null }); };
 
+  const handleCopy = (e, hexCode) => {
+    if (e) e.stopPropagation(); // ป้องกันไม่ให้คลิกทะลุไปเปิด Modal อื่น
+    navigator.clipboard.writeText(hexCode).then(() => {
+      console.log(`Copied: ${hexCode}`);
+      // หากคุณมี Toast/Alert สามารถเรียกใช้ตรงนี้ได้ เช่น alert(`คัดลอก #${hexCode} แล้ว`);
+    }).catch(err => {
+      console.error('Failed to copy!', err);
+    });
+  };
+
   return (
     <aside className="sidebar-container">
       <div className="sidebar-section mood-section">
@@ -354,16 +372,24 @@ const Sidebar = () => {
           <div className="input-wrapper">
             <button className="color-circle-btn" style={{ backgroundColor: `#${primary.value || 'FFF'}` }} onClick={() => togglePopover('picker', 'primary')} />
             <span className="hex-prefix">#</span>
+
+            {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
             <input type="text" value={primary.value} onChange={(e) => handleHexInput(e.target.value, (val) => setPrimary({ ...primary, value: val }))} readOnly={primary.isLocked} className={primary.isLocked ? 'locked-input' : ''} />
+
             <div className="action-group">
               <button className="action-icon" onClick={() => togglePopover('gradient', 'primary')}><Palette size={16} /></button>
+
+              {/* ปุ่ม Copy */}
+              <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex">
+                <Copy size={16} />
+              </button>
+
               <button className="action-icon" onClick={() => setPrimary({ ...primary, isLocked: !primary.isLocked })}>{primary.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
             </div>
             {openPopover.type === 'picker' && openPopover.id === 'primary' && <FloatingPicker hex={primary.value} onChange={(hex) => updateColorValue('primary', hex)} />}
-            {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} />}
+            {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} onCopy={handleCopy} />}
           </div>
         </div>
-
         {/* Secondary Colors */}
         <div className="color-group">
           <label className="section-title">Secondary/ Accent Colors</label>
@@ -372,17 +398,29 @@ const Sidebar = () => {
               <div key={slot.id} className="input-wrapper">
                 <button className="color-circle-btn" style={{ backgroundColor: `#${slot.value || 'FFF'}` }} onClick={() => togglePopover('picker', slot.id)} />
                 <span className="hex-prefix">#</span>
+
+                {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                 <input type="text" value={slot.value} onChange={(e) => handleHexInput(e.target.value, (val) => updateColorValue(slot.id, val))} readOnly={slot.isLocked} className={slot.isLocked ? 'locked-input' : ''} />
+
                 <div className="action-group">
                   <button className="action-icon" onClick={() => handleRemoveSecondary(slot.id)}><Minus size={16} /></button>
                   <button className="action-icon" onClick={() => togglePopover('gradient', slot.id)}><Palette size={16} /></button>
+
+                  {/* ปุ่ม Copy */}
+                  <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex">
+                    <Copy size={16} />
+                  </button>
+
                   <button className="action-icon" onClick={() => setSecondary(prev => prev.map(s => s.id === slot.id ? { ...s, isLocked: !s.isLocked } : s))}>{slot.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                 </div>
                 {openPopover.type === 'picker' && openPopover.id === slot.id && <FloatingPicker hex={slot.value} onChange={(hex) => updateColorValue(slot.id, hex)} />}
-                {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} />}
+                {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} onCopy={handleCopy} />}
               </div>
             ))}
+
+            {/* 📍 ใส่ปุ่ม Plus (+) กลับมาเพื่อแก้ Warning handleAddSecondary */}
             {[...Array(5 - secondary.length)].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
+
           </div>
         </div>
 
@@ -391,30 +429,40 @@ const Sidebar = () => {
           <label className="section-title">Neutral Colors</label>
           <div className="shades-grid neutral-grid">
             {neutralShades.map((shade, index) => (
-              <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}` }}><span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span></div>
+              <div
+                key={index}
+                className="shade-cell"
+                style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
+                onClick={(e) => handleCopy(e, shade)}
+                title={`Click to copy: #${shade}`}
+              >
+                <span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span>
+              </div>
             ))}
             <div className="shade-cell empty-cell"></div>
           </div>
         </div>
 
-        {/* 📍 ปุ่ม Save Palette กดแล้วเปิดหน้าต่าง Modal */}
-        <button 
-          className="save-palette-btn" 
-          onClick={() => setIsSaveModalOpen(true)}
-        >
-          Save Palette
-        </button>
-      </div>
+      </div> {/* 📍 1. วงเล็บนี้คือการปิด <div className="sidebar-section palette-section"> */}
 
-      {/* 📍 เรียกใช้งาน Component หน้าต่าง SavePaletteModal */}
+      {/* 📍 2. ปุ่ม Save Palette ต้องอยู่ นอกวงเล็บด้านบน เพื่อล็อกให้อยู่ล่างสุดเสมอ */}
+      <button
+        className="save-palette-btn"
+        onClick={() => setIsSaveModalOpen(true)}
+      >
+        Save Palette
+      </button>
+
+      {/* 📍 3. หน้าต่าง Modal */}
       <SavePalette
-          isOpen={isSaveModalOpen} 
-          onClose={() => setIsSaveModalOpen(false)} 
-          colors={currentColors}
-          userId={userId}
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        colors={currentColors}
+        userId={userId}
       />
-    </aside>
+
+    </aside> /* 📍 4. ปิด Sidebar Container นอกสุด */
   );
 };
 
-export default Sidebar;
+export default GenerateSidebar;

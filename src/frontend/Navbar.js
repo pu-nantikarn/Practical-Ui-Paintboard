@@ -132,7 +132,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                                 />
                                 <span className="profile-name-nav">
                                     {/* ดึงชื่อมาจาก Database แทน (ถ้ายังดึงไม่เสร็จให้ใช้ชื่อจาก Google ไปก่อน) */}
-                                    {dbUser ? dbUser.full_name : user.user_metadata.full_name}
+                                    {dbUser ? dbUser.user_name : user.user_metadata.full_name}
                                 </span>
                                 <ChevronDown size={16} className={`chevron-icon ${isDropdownOpen ? 'rotate' : ''}`} />
                             </button>

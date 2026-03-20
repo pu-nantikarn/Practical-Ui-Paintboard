@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Folder, ChevronDown, Layers, Palette,
-    X,
-    Plus, Check,ArrowUpRight, Grip
+    X, Trash2,
+    Plus, Check, ArrowUpRight, Grip
 } from 'lucide-react';
 import { supabase } from '../backend/supabaseClient';
 import './MyPalette.css';
@@ -20,7 +20,7 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
     const toggleCollection = (colId) => {
         setExpandedCols(prev => ({
             ...prev,
-            [colId]: !prev[colId] 
+            [colId]: !prev[colId]
         }));
     };
 
@@ -76,14 +76,14 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
 
     useEffect(() => {
         if (isOpen && userId) {
-        fetchData();
-        setIsCreatingCollection(false);
-        setNewCollectionName('');
-    } else if (isOpen && !userId) {
-        // กรณีเปิด Modal แต่ยังไม่ได้ล็อกอิน ให้หยุดโหลด
-        setLoading(false);
-    }
-}, [isOpen, userId, fetchData]);
+            fetchData();
+            setIsCreatingCollection(false);
+            setNewCollectionName('');
+        } else if (isOpen && !userId) {
+            // กรณีเปิด Modal แต่ยังไม่ได้ล็อกอิน ให้หยุดโหลด
+            setLoading(false);
+        }
+    }, [isOpen, userId, fetchData]);
 
     // ฟังก์ชันบันทึก Collection ลง Database
     const handleCreateCollection = async () => {
@@ -117,6 +117,55 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
 
     if (!isOpen) return null;
 
+    // 📍 ฟังก์ชัน 1: ลบคอลเลกชัน (ย้ายจานสีไป Uncategorized)
+    const handleDeleteCollection = async (e, colId, colName) => {
+        e.stopPropagation(); // ป้องกันไม่ให้การคลิกปุ่มไปกระตุ้นการพับ/กางของแถบคอลเลกชัน
+
+        if (!window.confirm(`คุณต้องการลบคอลเลกชัน "${colName}" ใช่หรือไม่?\n(จานสีที่อยู่ด้านในจะไม่ถูกลบ และจะถูกย้ายไปที่ Uncategorized)`)) return;
+
+        try {
+            // 1. ปลดจานสีทั้งหมดที่อยู่ในคอลเลกชันนี้ให้เป็น null ก่อน
+            const { error: updateError } = await supabase
+                .from('palette')
+                .update({ collection_id: null })
+                .eq('collection_id', colId);
+
+            if (updateError) throw updateError;
+
+            // 2. ลบตัวคอลเลกชันทิ้ง
+            const { error: deleteError } = await supabase
+                .from('collection')
+                .delete()
+                .eq('collection_id', colId);
+
+            if (deleteError) throw deleteError;
+
+            // 3. รีโหลดข้อมูลใหม่
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting collection:", error);
+            alert("เกิดข้อผิดพลาดในการลบคอลเลกชัน: " + error.message);
+        }
+    };
+
+    // 📍 ฟังก์ชัน 2: ลบจานสี
+    const handleDeletePalette = async (paletteId, paletteName) => {
+        if (!window.confirm(`คุณต้องการลบจานสี "${paletteName}" ใช่หรือไม่?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('palette')
+                .delete()
+                .eq('palette_id', paletteId);
+
+            if (error) throw error;
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting palette:", error);
+            alert("เกิดข้อผิดพลาดในการลบจานสี: " + error.message);
+        }
+    };
+
     // --- 🚀 ส่วนที่ปรับปรุงใหม่: แยกการเรนเดอร์เนื้อหาออกมาเพื่อลดความซับซ้อน ---
     const renderContent = () => {
         if (loading) {
@@ -127,7 +176,7 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
         const uncategorizedPalettes = groupedPalettes['uncategorized'] || [];
         const hasUncategorized = uncategorizedPalettes.length > 0;
         const isUncategorizedExpanded = expandedCols['uncategorized'] === true;
-        
+
         // ถ้าไม่มีทั้งคอลเลกชัน และไม่มีจานสีที่ไม่ได้จัดหมวดหมู่เลย = ว่างเปล่า
         const isEmpty = collections.length === 0 && !hasUncategorized;
 
@@ -152,22 +201,44 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
 
                     return (
                         <section key={col.collection_id} style={{ marginBottom: '16px' }}>
-                            <div 
-                                className="collection-bar" 
+                            <div
+                                className="collection-bar"
                                 onClick={() => toggleCollection(col.collection_id)}
-                                style={{ cursor: 'pointer', backgroundColor: '#a3a3a3' }}
+                                style={{
+                                    cursor: 'pointer',
+                                    backgroundColor: '#a3a3a3',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
                             >
-                                <div className="collection-info">
+                                <div className="collection-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Folder size={20} /> {col.collection_name}
                                 </div>
-                                <ChevronDown size={20} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {/* 📍 ปุ่มถังขยะสำหรับลบ Collection */}
+                                    <button
+                                        className="col-delete-btn"
+                                        onClick={(e) => handleDeleteCollection(e, col.collection_id, col.collection_name)}
+                                        title="Delete Collection"
+                                        style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', padding: 0 }}
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                    <ChevronDown size={20} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
+                                </div>
                             </div>
-                            
+
                             {isExpanded && (
                                 <div className="palette-grid" style={{ marginTop: '12px' }}>
                                     {palettesInCol.length > 0 ? (
                                         palettesInCol.map(palette => (
-                                            <PaletteCard key={palette.palette_id} palette={palette} />
+                                            <PaletteCard
+                                                key={palette.palette_id}
+                                                palette={palette}
+                                                onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)} // 📍 เพิ่มตรงนี้
+                                            />
                                         ))
                                     ) : (
                                         <p style={{ padding: '0 10px', color: '#71717a', fontSize: '0.9rem' }}>ไม่มีจานสีในคอลเลกชันนี้</p>
@@ -182,22 +253,26 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
                 {/* 📍 ใช้เงื่อนไขแบบตรงไปตรงมา ไม่ต้องซ้อนฟังก์ชัน */}
                 {hasUncategorized && (
                     <section style={{ marginBottom: '16px' }}>
-                        <div 
-                            className="collection-bar" 
+                        <div
+                            className="collection-bar"
                             onClick={() => toggleCollection('uncategorized')}
                             style={{ cursor: 'pointer', backgroundColor: '#52525b' }}
                         >
                             <div className="collection-info">
-                                <Layers size={20} color="#ffffff" /> 
+                                <Layers size={20} color="#ffffff" />
                                 <span style={{ color: '#ffffff' }}>Uncategorized</span>
                             </div>
                             <ChevronDown size={20} color="#ffffff" style={{ transform: isUncategorizedExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
                         </div>
-                        
+
                         {isUncategorizedExpanded && (
                             <div className="palette-grid" style={{ marginTop: '12px' }}>
                                 {uncategorizedPalettes.map(palette => (
-                                    <PaletteCard key={palette.palette_id} palette={palette} />
+                                    <PaletteCard
+                                        key={palette.palette_id}
+                                        palette={palette}
+                                        onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)} // 📍 เพิ่มตรงนี้
+                                    />
                                 ))}
                             </div>
                         )}
@@ -278,21 +353,21 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
 };
 
 // PaletteCard Component
-const PaletteCard = ({ palette }) => {
+const PaletteCard = ({ palette, onDelete }) => {
     const moodText = palette.mood?.mood_name || 'Mix';
     const sourceText = palette.source?.source_name || 'Generate';
-   return (
+    return (
         <div className="palette-card">
             {/* ฝั่งซ้าย: ชื่อ และ แถบสี */}
             <div className="palette-left">
                 <span className="palette-name">{palette.palette_name || 'My Palette'}</span>
-                
+
                 {/* 📍 แก้ไขส่วนแสดงผลสีตรงนี้ */}
                 <div className="color-blocks">
                     {palette.paletteDetail?.map((detail, index) => {
                         // 1. เข้าถึง hex_value ที่ซ้อนอยู่ในตาราง color (ถ้าดึงไม่ได้ให้เป็นสีเทา CCCCCC)
-                        const rawHex = detail.color?.hex_value || 'CCCCCC'; 
-                        
+                        const rawHex = detail.color?.hex_value || 'CCCCCC';
+
                         // 2. เช็คว่ามีเครื่องหมาย # นำหน้าหรือยัง ถ้ายังให้เติมเข้าไป
                         const bgColor = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
 
@@ -307,7 +382,7 @@ const PaletteCard = ({ palette }) => {
                     })}
                 </div>
                 {/* ------------------------- */}
-                
+
             </div>
 
             {/* ฝั่งขวา: รายละเอียด และ ไอคอน */}
@@ -321,6 +396,9 @@ const PaletteCard = ({ palette }) => {
                     </button>
                     <button className="action-btn" title="Options">
                         <Grip size={22} strokeWidth={2} />
+                    </button>
+                    <button className="action-btn delete-btn" title="Delete" onClick={onDelete}>
+                        <Trash2 size={22} strokeWidth={2} />
                     </button>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 // ไฟล์: src/frontend/ImageSidebar.js
 import React, { useState, useEffect, useRef } from 'react';
 import { getPalette } from 'colorthief';
-import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette } from 'lucide-react';
+import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy } from 'lucide-react';
 
 // 📍 นำเข้า CSS และ Component Modal
 import './GenerateSidebar.css';
@@ -209,11 +209,17 @@ const FloatingPicker = ({ hex, onChange }) => {
     );
 };
 
-const FloatingGradient = ({ baseHex }) => (
+const FloatingGradient = ({ baseHex, onCopy }) => (
     <div className="floating-popover gradient-popover" onClick={e => e.stopPropagation()}>
         <div className="shades-grid">
             {generateShades(baseHex).map((shade, index) => (
-                <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}` }}>
+                <div
+                    key={index}
+                    className="shade-cell"
+                    style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} 
+                    onClick={(e) => onCopy(e, shade)} 
+                    title={`Click to copy: #${shade}`}
+                >
                     <span className="shade-text" style={{ color: getContrastColor(shade) }}>#{shade}</span>
                     {shade === baseHex && <div className="active-dot" style={{ backgroundColor: getContrastColor(shade) }}></div>}
                 </div>
@@ -355,6 +361,16 @@ const ImageSidebar = () => {
     const handleAddSecondary = () => { if (secondary.length < 5) setSecondary(prev => [...prev, { id: Date.now(), value: '000000', isLocked: false }]); };
     const handleRemoveSecondary = (id) => { setSecondary(prev => prev.filter(s => s.id !== id)); if (openPopover.id === id) setOpenPopover({ type: null, id: null }); };
 
+    // 📍 ฟังก์ชันสำหรับคัดลอกรหัสสี
+    const handleCopy = (e, hexCode) => {
+        if (e) e.stopPropagation(); 
+        navigator.clipboard.writeText(hexCode).then(() => {
+            console.log(`Copied: ${hexCode}`);
+        }).catch(err => {
+            console.error('Failed to copy!', err);
+        });
+    };
+
     return (
         <aside className="sidebar-container image-mode-sidebar">
             {/* --- Import Image Section --- */}
@@ -384,13 +400,22 @@ const ImageSidebar = () => {
                     <div className="input-wrapper">
                         <button className="color-circle-btn" style={{ backgroundColor: `#${primary.value || 'FFF'}` }} onClick={() => togglePopover('picker', 'primary')} />
                         <span className="hex-prefix">#</span>
+                        
+                        {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                         <input type="text" value={primary.value} onChange={(e) => handleInputHex(e.target.value, (val) => setPrimary({ ...primary, value: val }))} readOnly={primary.isLocked} className={primary.isLocked ? 'locked-input' : ''} />
+                        
                         <div className="action-group">
                             <button className="action-icon" onClick={() => togglePopover('gradient', 'primary')}><Palette size={16} /></button>
+                            
+                            {/* ปุ่ม Copy */}
+                            <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex">
+                                <Copy size={16} />
+                            </button>
+                            
                             <button className="action-icon" onClick={() => setPrimary({ ...primary, isLocked: !primary.isLocked })}>{primary.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                         </div>
                         {openPopover.type === 'picker' && openPopover.id === 'primary' && <FloatingPicker hex={primary.value} onChange={(hex) => updateColorValue('primary', hex)} />}
-                        {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} />}
+                        {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} onCopy={handleCopy} />} 
                     </div>
                 </div>
 
@@ -402,17 +427,29 @@ const ImageSidebar = () => {
                             <div key={slot.id} className="input-wrapper">
                                 <button className="color-circle-btn" style={{ backgroundColor: `#${slot.value || 'FFF'}` }} onClick={() => togglePopover('picker', slot.id)} />
                                 <span className="hex-prefix">#</span>
+                                
+                                {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                                 <input type="text" value={slot.value} onChange={(e) => handleInputHex(e.target.value, (val) => updateColorValue(slot.id, val))} readOnly={slot.isLocked} className={slot.isLocked ? 'locked-input' : ''} />
+                                
                                 <div className="action-group">
                                     <button className="action-icon" onClick={() => handleRemoveSecondary(slot.id)}><Minus size={16} /></button>
                                     <button className="action-icon" onClick={() => togglePopover('gradient', slot.id)}><Palette size={16} /></button>
+                                    
+                                    {/* ปุ่ม Copy */}
+                                    <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex">
+                                        <Copy size={16} />
+                                    </button>
+
                                     <button className="action-icon" onClick={() => setSecondary(prev => prev.map(s => s.id === slot.id ? { ...s, isLocked: !s.isLocked } : s))}>{slot.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                                 </div>
                                 {openPopover.type === 'picker' && openPopover.id === slot.id && <FloatingPicker hex={slot.value} onChange={(hex) => updateColorValue(slot.id, hex)} />}
-                                {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} />}
+                                {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} onCopy={handleCopy} />}
                             </div>
                         ))}
+                        
+                        {/* 📍 ใส่ปุ่ม Plus (+) กลับมาเพื่อแก้ Warning handleAddSecondary */}
                         {[...Array(5 - secondary.length)].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
+                        
                     </div>
                 </div>
 
@@ -421,7 +458,15 @@ const ImageSidebar = () => {
                     <label className="section-title">Neutral Colors</label>
                     <div className="shades-grid neutral-grid">
                         {neutralShades.map((shade, index) => (
-                            <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}` }}><span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span></div>
+                            <div
+                                key={index}
+                                className="shade-cell"
+                                style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
+                                onClick={(e) => handleCopy(e, shade)}
+                                title={`Click to copy: #${shade}`}
+                            >
+                                <span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span>
+                            </div>
                         ))}
                         <div className="shade-cell empty-cell"></div>
                     </div>

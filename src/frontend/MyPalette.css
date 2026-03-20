@@ -2,168 +2,180 @@
 
 /* --- ฉากหลังสีดำจางๆ (Overlay) --- */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 /* --- ตัวกล่อง Pop-up --- */
 .modal-content {
-  background-color: #ffffff;
-  width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  font-family: system-ui, -apple-system, sans-serif;
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    font-family: system-ui, -apple-system, sans-serif;
 }
 
 /* --- ส่วนหัว (Header) --- */
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
 
 .modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #000;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
 }
 
 .create-collection-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #000;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #000;
+    cursor: pointer;
 }
 
 /* --- แถบคอลเลกชัน (Collection Bar) --- */
 .collection-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #a3a3a3; /* สีเทาตามรูป */
-  color: white;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #a3a3a3;
+    /* สีเทาตามรูป */
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
 }
 
 .collection-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
 }
 
 /* --- การ์ดจานสี (Palette Card) ---[cite: 5] */
 .palette-card {
-  display: flex;
-  justify-content: space-between; /* ดันเนื้อหาฝั่งซ้ายและขวาให้แยกออกจากกัน */
-  align-items: stretch;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 16px 24px; /* เพิ่ม padding ด้านข้างให้ดูโปร่งขึ้น */
-  background-color: #ffffff;
-  width: 600px; /* 📍 บังคับให้กว้างเต็ม 100% */
-  box-sizing: border-box; /* ป้องกันขอบล้นจาก padding */
+    display: flex;
+    justify-content: space-between;
+    /* ดันเนื้อหาฝั่งซ้ายและขวาให้แยกออกจากกัน */
+    align-items: stretch;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 16px 24px;
+    /* เพิ่ม padding ด้านข้างให้ดูโปร่งขึ้น */
+    background-color: #ffffff;
+    width: 600px;
+    /* 📍 บังคับให้กว้างเต็ม 100% */
+    box-sizing: border-box;
+    /* ป้องกันขอบล้นจาก padding */
 }
 
 .palette-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .palette-left {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .palette-name {
-  font-weight: 500;
-  font-size: 1.25rem; /* ขนาดตัวอักษรใหญ่ขึ้นตามรูป */
-  color: #111;
-  letter-spacing: 0.5px;
+    font-weight: 500;
+    font-size: 1.25rem;
+    /* ขนาดตัวอักษรใหญ่ขึ้นตามรูป */
+    color: #111;
+    letter-spacing: 0.5px;
 }
 
 .color-blocks {
-  display: flex;
-  height: 36px; /* ความสูงของแถบสี */
-  /* ลบ gap ออก เพื่อให้สีแนบติดกัน */
+    display: flex;
+    height: 36px;
+    /* ความสูงของแถบสี */
+    /* ลบ gap ออก เพื่อให้สีแนบติดกัน */
 }
 
 .color-block {
-  width: 48px; /* ความกว้างของสีแต่ละช่อง */
-  height: 100%;
+    width: 48px;
+    /* ความกว้างของสีแต่ละช่อง */
+    height: 100%;
 }
 
 /* --- ฝั่งขวา: ข้อความและปุ่ม --- */
 .palette-right {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* ดันข้อความขึ้นบน ดันไอคอนลงล่าง */
-  align-items: flex-end; /* จัดชิดขวา */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* ดันข้อความขึ้นบน ดันไอคอนลงล่าง */
+    align-items: flex-end;
+    /* จัดชิดขวา */
 }
 
 .palette-meta {
-  font-size: 0.85rem;
-  color: #6b7280;
-  letter-spacing: 0.3px;
+    font-size: 0.85rem;
+    color: #6b7280;
+    letter-spacing: 0.3px;
 }
 
 .palette-actions {
-  display: flex;
-  gap: 16px; /* ระยะห่างระหว่างปุ่มไอคอน */
-  color: #111;
+    display: flex;
+    gap: 16px;
+    /* ระยะห่างระหว่างปุ่มไอคอน */
+    color: #111;
 }
 
 .action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #111;
-  transition: color 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    transition: color 0.2s ease;
 }
 
 .action-btn:hover {
-  color: #6b7280; /* สีเทาเข้มเมื่อเอาเมาส์ชี้ */
+    color: #6b7280;
+    /* สีเทาเข้มเมื่อเอาเมาส์ชี้ */
 }
 
 /* --- เส้นคั่น (Divider) --- */
 .modal-divider {
-  height: 1px;
-  background-color: #d1d5db;
-  margin: 24px 0;
+    height: 1px;
+    background-color: #d1d5db;
+    margin: 24px 0;
 }
 
 /* ตัวอย่างคร่าวๆ สำหรับ MyPaletteModal.css */
 .palette-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 .p-card {

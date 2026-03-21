@@ -1,16 +1,82 @@
 // ไฟล์: src/frontend/ImageSidebar.js
 import React, { useState, useEffect, useRef } from 'react';
-import { getPalette } from 'colorthief';
-import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy } from 'lucide-react';
+// 📍 เอา colorthief ออก เพราะเราจะใช้อัลกอริทึม Clustering ของเราเอง
+import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle } from 'lucide-react';
 
-// 📍 นำเข้า CSS และ Component Modal
+// นำเข้า CSS และ Component Modal
 import './GenerateSidebar.css';
 import './ImageSidebar.css';
-import SavePaletteModal from '../frontend/SavePalette'; // เช็ค Path ให้ตรงกับโฟลเดอร์ของคุณ
+import SavePaletteModal from '../frontend/SavePalette';
 import { supabase } from '../backend/supabaseClient';
 
 // ==========================================
-// 🛠️ Color Math Helpers (สมการคำนวณสี)
+// 🛠️ 1. อัลกอริทึม Color Clustering 
+// ==========================================
+const extractColorsFromImage = (imageElement, threshold) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // ลดขนาดรูปลงมาเพื่อความเร็วในการคำนวณ
+    const MAX_SIZE = 400;
+    let width = imageElement.naturalWidth || imageElement.width;
+    let height = imageElement.naturalHeight || imageElement.height;
+
+    if (width > MAX_SIZE || height > MAX_SIZE) {
+        const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+        width = Math.floor(width * ratio);
+        height = Math.floor(height * ratio);
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(imageElement, 0, 0, width, height);
+
+    const imgData = ctx.getImageData(0, 0, width, height).data;
+    const clusters = [];
+    const step = 4; // เช็คทีละพิกเซล
+
+    for (let i = 0; i < imgData.length; i += step * 3) {
+        const r = imgData[i];
+        const g = imgData[i + 1];
+        const b = imgData[i + 2];
+
+        let closestCluster = null;
+        let minDistance = Infinity;
+
+        for (let j = 0; j < clusters.length; j++) {
+            const cluster = clusters[j];
+            const dist = Math.sqrt(
+                Math.pow(r - cluster.r, 2) + Math.pow(g - cluster.g, 2) + Math.pow(b - cluster.b, 2)
+            );
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestCluster = cluster;
+            }
+        }
+
+        if (closestCluster && minDistance <= threshold) {
+            closestCluster.sumR += r;
+            closestCluster.sumG += g;
+            closestCluster.sumB += b;
+            closestCluster.count++;
+            closestCluster.r = Math.round(closestCluster.sumR / closestCluster.count);
+            closestCluster.g = Math.round(closestCluster.sumG / closestCluster.count);
+            closestCluster.b = Math.round(closestCluster.sumB / closestCluster.count);
+        } else {
+            clusters.push({ r, g, b, sumR: r, sumG: g, sumB: b, count: 1 });
+        }
+    }
+
+    // เรียงกลุ่มที่มีสีเยอะสุดขึ้นก่อน
+    clusters.sort((a, b) => b.count - a.count);
+    // const totalPixels = clusters.reduce((sum, c) => sum + c.count, 0);
+    // const filteredClusters = clusters.filter(c => (c.count / totalPixels) > 0.01);
+    const rgbToHex = (r, g, b) => [r, g, b].map(x => Math.max(0, Math.min(255, x)).toString(16).padStart(2, '0')).join('').toUpperCase();
+    return clusters.map(c => rgbToHex(c.r, c.g, c.b));
+};
+
+// ==========================================
+// 🛠️ Color Math Helpers (สมการคำนวณสีเดิม)
 // ==========================================
 const getContrastColor = (hex) => {
     if (hex.length !== 6) return '#000000';
@@ -216,8 +282,8 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
                 <div
                     key={index}
                     className="shade-cell"
-                    style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} 
-                    onClick={(e) => onCopy(e, shade)} 
+                    style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
+                    onClick={(e) => onCopy(e, shade)}
                     title={`Click to copy: #${shade}`}
                 >
                     <span className="shade-text" style={{ color: getContrastColor(shade) }}>#{shade}</span>
@@ -235,7 +301,6 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 const ImageSidebar = () => {
     const imgRef = useRef(null);
 
-    // --- 1. State รูปภาพ และ สี (ดึงจากเบราว์เซอร์ก่อน) ---
     const [uploadedImage, setUploadedImage] = useState(() => {
         const savedImage = localStorage.getItem('imgUploaded');
         return savedImage ? savedImage : null;
@@ -258,6 +323,10 @@ const ImageSidebar = () => {
     const [openPopover, setOpenPopover] = useState({ type: null, id: null });
     const neutralShades = generateShades('6B7280');
 
+    // 📍 2. เพิ่ม State สำหรับเก็บสีทั้งหมดที่ดูดได้ และไว้เปิด/ปิดหน้าต่างย่อย
+    const [allExtractedColors, setAllExtractedColors] = useState([]);
+    const [showAllColorsPanel, setShowAllColorsPanel] = useState(false);
+
     const [userId, setUserId] = useState(null);
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -265,17 +334,13 @@ const ImageSidebar = () => {
         });
     }, []);
 
-
-    // 📍 2. State ควบคุมหน้าต่าง Save Palette Modal
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
-    // 📍 3. ดึงสีปัจจุบันมารวมกันเป็น Array เพื่อส่งไปให้ Modal แสดงผล
     const currentColors = [
         primary.value,
         ...secondary.map(s => s.value)
-    ].filter(Boolean); // กันค่าว่าง
+    ].filter(Boolean);
 
-    // --- 4. ดักจับการคลิกพื้นหลังเพื่อปิด Popover ---
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!event.target.closest('.floating-popover') && !event.target.closest('.color-circle-btn') && !event.target.closest('.action-icon')) {
@@ -286,64 +351,106 @@ const ImageSidebar = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    // --- 5. 💾 ระบบบันทึกอัตโนมัติ (Auto-Save) ลงเบราว์เซอร์ ---
     useEffect(() => {
         if (uploadedImage) {
             try {
                 localStorage.setItem('imgUploaded', uploadedImage);
             } catch (error) {
-                console.warn("รูปภาพมีขนาดใหญ่เกินไป (เกินโควต้าเบราว์เซอร์) จะแสดงผลได้แต่ไม่จำค่าตอนรีเฟรชครับ");
+                console.warn("รูปภาพมีขนาดใหญ่เกินไป (เกินโควต้าเบราว์เซอร์)");
             }
         } else {
             localStorage.removeItem('imgUploaded');
         }
     }, [uploadedImage]);
 
-    useEffect(() => {
-        localStorage.setItem('imgPrimary', JSON.stringify(primary));
-    }, [primary]);
+    useEffect(() => localStorage.setItem('imgPrimary', JSON.stringify(primary)), [primary]);
+    useEffect(() => localStorage.setItem('imgSecondary', JSON.stringify(secondary)), [secondary]);
 
-    useEffect(() => {
-        localStorage.setItem('imgSecondary', JSON.stringify(secondary));
-    }, [secondary]);
-
-
-    // --- 6. ฟังก์ชันอัปโหลดและดึงสี ---
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (event) => setUploadedImage(event.target.result);
-            reader.readAsDataURL(file); // แปลงรูปเป็น Base64
+            reader.readAsDataURL(file);
         }
     };
 
+    const shuffleArray = (array) => {
+        let shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
+const handleShuffleColors = () => {
+        // ถ้ายังไม่ได้ดูดสี หรือไม่มีสีที่ดึงได้ ให้ข้ามไป
+        if (allExtractedColors.length === 0) return;
+
+        // สุ่มลำดับสีที่ดึงได้ทั้งหมดใหม่
+        const randomColors = shuffleArray(allExtractedColors);
+        let colorIndex = 0; // ตัวนับว่าใช้สีไปแล้วกี่สี
+
+        // 1. อัปเดตสีในช่อง Primary (ถ้าไม่ได้ล็อก)
+        setPrimary(prev => {
+            if (prev.isLocked || colorIndex >= randomColors.length) return prev;
+            const nextColor = randomColors[colorIndex++];
+            return { ...prev, value: nextColor };
+        });
+
+        // 2. อัปเดตสีในช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อก)
+        setSecondary(prev => {
+            return prev.map(slot => {
+                if (slot.isLocked || colorIndex >= randomColors.length) {
+                    return slot;
+                }
+                const nextColor = randomColors[colorIndex++];
+                return { ...slot, value: nextColor };
+            });
+        });
+    };
+
+    // 📍 3. ฟังก์ชันดึงสีจากรูป จะถูกเรียกเมื่อรูปโหลดเสร็จ (เรียกใช้อัลกอริทึม Clustering)
     const handleImageLoad = () => {
         try {
-            const colors = getPalette(imgRef.current, 6);
-            const hexColors = colors.map(c => rgbToHex(c[0], c[1], c[2]));
+            // ดึงสีทั้งหมดด้วยอัลกอริทึมของเรา (Threshold = 20.0)
+            const hexColors = extractColorsFromImage(imgRef.current, 20.0);
 
-            // อัปเดต Primary Color (ถ้าไม่ติดล็อค)
-            setPrimary(prev => prev.isLocked ? prev : { ...prev, value: hexColors[0] });
+            // เก็บสีทั้งหมดไว้ใน State
+            setAllExtractedColors(hexColors);
 
-            // อัปเดต Secondary Colors (ถ้าไม่ติดล็อค)
-            setSecondary(prev => {
-                let newSecondary = [...prev];
-                for (let i = 1; i < hexColors.length; i++) {
-                    if (newSecondary[i - 1]) {
-                        if (!newSecondary[i - 1].isLocked) newSecondary[i - 1].value = hexColors[i];
-                    } else {
-                        newSecondary.push({ id: Date.now() + i, value: hexColors[i], isLocked: false });
-                    }
-                }
-                return newSecondary;
+            if (hexColors.length === 0) return;
+
+            // 📍 1. สุ่มสีที่ดึงมาทั้งหมดให้กระจายกัน
+            const randomColors = shuffleArray(hexColors);
+            let colorIndex = 0; // ตัวนับว่าใช้สีไปแล้วกี่สี
+
+            // 📍 2. เอาสีที่สุ่มได้มาใส่ Primary (ถ้าไม่ได้ล็อก)
+            setPrimary(prev => {
+                if (prev.isLocked || colorIndex >= randomColors.length) return prev;
+                const nextColor = randomColors[colorIndex++];
+                return { ...prev, value: nextColor };
             });
+
+            // 📍 3. เอาสีที่เหลือมาใส่ Secondary (ตามจำนวน Slot ที่มีอยู่ และถ้าไม่ได้ล็อก)
+            setSecondary(prev => {
+                return prev.map(slot => {
+                    // ถ้าช่องนี้โดนล็อก หรือ สีที่สุ่มหมดแล้ว ให้ข้ามไป
+                    if (slot.isLocked || colorIndex >= randomColors.length) {
+                        return slot;
+                    }
+                    // ถ้ายังไม่ล็อก ให้เอาสีที่สุ่มลำดับถัดไปมาใส่
+                    const nextColor = randomColors[colorIndex++];
+                    return { ...slot, value: nextColor };
+                });
+            });
+
         } catch (error) {
             console.log("ไม่สามารถดึงสีได้จากรูปนี้", error);
         }
     };
 
-    // --- Palette Handlers ---
     const handleInputHex = (val, callback) => {
         const validHex = val.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6).toUpperCase();
         callback(validHex);
@@ -361,18 +468,16 @@ const ImageSidebar = () => {
     const handleAddSecondary = () => { if (secondary.length < 5) setSecondary(prev => [...prev, { id: Date.now(), value: '000000', isLocked: false }]); };
     const handleRemoveSecondary = (id) => { setSecondary(prev => prev.filter(s => s.id !== id)); if (openPopover.id === id) setOpenPopover({ type: null, id: null }); };
 
-    // 📍 ฟังก์ชันสำหรับคัดลอกรหัสสี
     const handleCopy = (e, hexCode) => {
-        if (e) e.stopPropagation(); 
+        if (e) e.stopPropagation();
         navigator.clipboard.writeText(hexCode).then(() => {
             console.log(`Copied: ${hexCode}`);
-        }).catch(err => {
-            console.error('Failed to copy!', err);
-        });
+        }).catch(err => console.error('Failed to copy!', err));
     };
 
     return (
-        <aside className="sidebar-container image-mode-sidebar">
+        <aside className="sidebar-container image-mode-sidebar" style={{ position: 'relative' }}>
+
             {/* --- Import Image Section --- */}
             <div className="sidebar-section import-section">
                 <label className="image-import-box">
@@ -394,28 +499,31 @@ const ImageSidebar = () => {
             {/* --- Palette Section --- */}
             <div className="sidebar-section palette-section">
 
+                {/* 📍 4. ปุ่มกดเปิดหน้าต่างสีทั้งหมด (แสดงเมื่อดึงสีได้แล้ว) */}
+                {allExtractedColors.length > 0 && (
+                    <button
+                        className={`toggle-all-colors-btn ${showAllColorsPanel ? 'active' : ''}`}
+                        onClick={() => setShowAllColorsPanel(!showAllColorsPanel)}
+                    >
+                        {showAllColorsPanel ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+                        {showAllColorsPanel ? "ซ่อนหน้าต่างสีทั้งหมด" : `ดูสีทั้งหมดที่ดึงได้ (${allExtractedColors.length} สี)`}
+                    </button>
+                )}
+
                 {/* Primary Color */}
                 <div className="color-group">
                     <label className="section-title">Primary Colors</label>
                     <div className="input-wrapper">
                         <button className="color-circle-btn" style={{ backgroundColor: `#${primary.value || 'FFF'}` }} onClick={() => togglePopover('picker', 'primary')} />
                         <span className="hex-prefix">#</span>
-                        
-                        {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                         <input type="text" value={primary.value} onChange={(e) => handleInputHex(e.target.value, (val) => setPrimary({ ...primary, value: val }))} readOnly={primary.isLocked} className={primary.isLocked ? 'locked-input' : ''} />
-                        
                         <div className="action-group">
                             <button className="action-icon" onClick={() => togglePopover('gradient', 'primary')}><Palette size={16} /></button>
-                            
-                            {/* ปุ่ม Copy */}
-                            <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex">
-                                <Copy size={16} />
-                            </button>
-                            
+                            <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex"><Copy size={16} /></button>
                             <button className="action-icon" onClick={() => setPrimary({ ...primary, isLocked: !primary.isLocked })}>{primary.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                         </div>
                         {openPopover.type === 'picker' && openPopover.id === 'primary' && <FloatingPicker hex={primary.value} onChange={(hex) => updateColorValue('primary', hex)} />}
-                        {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} onCopy={handleCopy} />} 
+                        {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} onCopy={handleCopy} />}
                     </div>
                 </div>
 
@@ -427,30 +535,31 @@ const ImageSidebar = () => {
                             <div key={slot.id} className="input-wrapper">
                                 <button className="color-circle-btn" style={{ backgroundColor: `#${slot.value || 'FFF'}` }} onClick={() => togglePopover('picker', slot.id)} />
                                 <span className="hex-prefix">#</span>
-                                
-                                {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                                 <input type="text" value={slot.value} onChange={(e) => handleInputHex(e.target.value, (val) => updateColorValue(slot.id, val))} readOnly={slot.isLocked} className={slot.isLocked ? 'locked-input' : ''} />
-                                
                                 <div className="action-group">
                                     <button className="action-icon" onClick={() => handleRemoveSecondary(slot.id)}><Minus size={16} /></button>
                                     <button className="action-icon" onClick={() => togglePopover('gradient', slot.id)}><Palette size={16} /></button>
-                                    
-                                    {/* ปุ่ม Copy */}
-                                    <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex">
-                                        <Copy size={16} />
-                                    </button>
-
+                                    <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex"><Copy size={16} /></button>
                                     <button className="action-icon" onClick={() => setSecondary(prev => prev.map(s => s.id === slot.id ? { ...s, isLocked: !s.isLocked } : s))}>{slot.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                                 </div>
                                 {openPopover.type === 'picker' && openPopover.id === slot.id && <FloatingPicker hex={slot.value} onChange={(hex) => updateColorValue(slot.id, hex)} />}
                                 {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} onCopy={handleCopy} />}
                             </div>
                         ))}
-                        
-                        {/* 📍 ใส่ปุ่ม Plus (+) กลับมาเพื่อแก้ Warning handleAddSecondary */}
                         {[...Array(5 - secondary.length)].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
-                        
                     </div>
+                    {/* 📍 3. เพิ่มปุ่ม Shuffle สี ตรงด้านล่าง Secondary Slots นี้ */}
+                    {allExtractedColors.length > 0 && (
+                        <button 
+                            className="shuffle-btn"
+                            onClick={handleShuffleColors}
+                        >
+                            <div className="gen-btn-text">
+                                <Shuffle size={18} />
+                                Shuffle Colors
+                            </div>
+                        </button>
+                    )}
                 </div>
 
                 {/* Neutral */}
@@ -458,13 +567,7 @@ const ImageSidebar = () => {
                     <label className="section-title">Neutral Colors</label>
                     <div className="shades-grid neutral-grid">
                         {neutralShades.map((shade, index) => (
-                            <div
-                                key={index}
-                                className="shade-cell"
-                                style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
-                                onClick={(e) => handleCopy(e, shade)}
-                                title={`Click to copy: #${shade}`}
-                            >
+                            <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} onClick={(e) => handleCopy(e, shade)} title={`Click to copy: #${shade}`}>
                                 <span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span>
                             </div>
                         ))}
@@ -472,22 +575,37 @@ const ImageSidebar = () => {
                     </div>
                 </div>
 
-                {/* 📍 ปุ่ม Save Palette (กดแล้วเปิด Modal) */}
-                <button
-                    className="save-palette-btn"
-                    onClick={() => setIsSaveModalOpen(true)}
-                >
-                    Save Palette
-                </button>
             </div>
 
-            {/* 📍 เรียกใช้ Component หน้าต่าง Save Palette */}
-            <SavePaletteModal
-                isOpen={isSaveModalOpen}
-                onClose={() => setIsSaveModalOpen(false)}
-                colors={currentColors}
-                userId={userId}
-            />
+            <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
+
+            {/* 📍 5. หน้าต่างย่อยที่จะสไลด์ออกมาข้างๆ แสดงสีทั้งหมด */}
+            {showAllColorsPanel && (
+                <div className="all-colors-panel">
+                    <div className="all-colors-header">
+                        <h4>🎨 สีทั้งหมดที่ดึงได้</h4>
+                        <button className="all-colors-close-btn" onClick={() => setShowAllColorsPanel(false)}>
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    <div className="all-colors-grid">
+                        {allExtractedColors.map((hex, index) => (
+                            <div
+                                key={index}
+                                className="all-color-item"
+                                onClick={(e) => handleCopy(e, hex)}
+                                title={`Click to copy #${hex}`}
+                            >
+                                <div className="color-swatch" style={{ backgroundColor: `#${hex}` }}></div>
+                                <span>#{hex}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <SavePaletteModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} colors={currentColors} userId={userId} />
         </aside>
     );
 };

@@ -9,6 +9,7 @@ import './ImageSidebar.css';
 import SavePaletteModal from '../frontend/SavePalette';
 import { supabase } from '../backend/supabaseClient';
 
+
 // ==========================================
 // 🛠️ 1. อัลกอริทึม Color Clustering 
 // ==========================================
@@ -384,7 +385,7 @@ const ImageSidebar = () => {
         return shuffled;
     };
 
-const handleShuffleColors = () => {
+    const handleShuffleColors = () => {
         // ถ้ายังไม่ได้ดูดสี หรือไม่มีสีที่ดึงได้ ให้ข้ามไป
         if (allExtractedColors.length === 0) return;
 
@@ -550,7 +551,7 @@ const handleShuffleColors = () => {
                     </div>
                     {/* 📍 3. เพิ่มปุ่ม Shuffle สี ตรงด้านล่าง Secondary Slots นี้ */}
                     {allExtractedColors.length > 0 && (
-                        <button 
+                        <button
                             className="shuffle-btn"
                             onClick={handleShuffleColors}
                         >

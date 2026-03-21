@@ -6,6 +6,10 @@ import { supabase } from '../backend/supabaseClient';
 // 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
 import SavePalette from '../frontend/SavePalette';
 
+//function generate random color
+const getRandomHex = () => {
+  return Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
+};
 // ==========================================
 // 🛠️ Color Math Helpers (สมการคำนวณสีระดับโปร)
 // ==========================================
@@ -266,7 +270,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
 const GenerateSidebar = () => {
-  const moods = ['Random', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset', 'Futuristic'];
+  const moods = ['Random', 'Harmony','Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
   // --- 1. State ของสี และการจดจำค่า (localStorage) ---
   const [activeMood, setActiveMood] = useState(() => {
@@ -287,8 +291,98 @@ const GenerateSidebar = () => {
   const [openPopover, setOpenPopover] = useState({ type: null, id: null });
   const neutralShades = generateShades('6B7280');
 
+  const handleGenerateColors = () => {
+    // ถ้ายอมรับว่าผู้ใช้เลือกโหมด Random หรือ Mix ให้สุ่มสี
+    if (activeMood === 'Random' || activeMood === 'Mix') {
+
+      // 1. สุ่มสีให้ Primary (ถ้าไม่ได้ถูกล็อกอยู่)
+      setPrimary(prev => {
+        if (prev.isLocked) return prev;
+        return { ...prev, value: getRandomHex() };
+      });
+
+      // 2. สุ่มสีให้ Secondary (เฉพาะช่องที่เปิดอยู่และไม่ได้ล็อก)
+      setSecondary(prev => {
+        return prev.map(slot => {
+          if (slot.isLocked) return slot;
+          return { ...slot, value: getRandomHex() };
+        });
+      });
+
+    } else if (activeMood === 'Harmony') {
+      // 📍 โหมด Harmony: สุ่มสีแบบอิงทฤษฎีสี (พิจารณาทุกสีที่ถูกล็อค หรืออิง Primary ถ้าไม่มีล็อค)
+      
+      // 1. เก็บสีที่ถูกล็อคทั้งหมดลงตะกร้า (Array)
+      const lockedColors = [];
+      if (primary.isLocked) lockedColors.push(primary.value);
+      secondary.forEach(slot => {
+        if (slot.isLocked) lockedColors.push(slot.value);
+      });
+
+      // 📍 2. ตัวแปรเก็บสีฐานหลัก (กรณีไม่มีใครล็อคเลย)
+      let mainBaseHexForNoLock = null;
+
+      // ถ้าไม่มีสีไหนล็อคเลย เราจะบังคับสุ่มสี Primary ขึ้นมาใหม่ 1 สี เพื่อใช้เป็นเสาหลัก
+      if (lockedColors.length === 0) {
+        mainBaseHexForNoLock = getRandomHex();
+        // อัปเดตช่อง Primary ให้เป็นสีฐานที่เพิ่งสุ่มได้
+        setPrimary({ ...primary, value: mainBaseHexForNoLock });
+      }
+
+      // 3. ฟังก์ชันย่อย: สร้างสีที่กลมกลืน โดยอิงจากตะกร้าสีที่ล็อคไว้ (หรือสีฐานใหม่)
+      const getHarmoniousHex = (offsetCounter) => {
+        let baseHex;
+        
+        if (lockedColors.length === 0) {
+          // ถ้าไม่มีสีไหนล็อคเลย ให้ใช้ mainBaseHexForNoLock (Primary ที่เพิ่งสุ่ม) เป็นฐานเสมอ
+          baseHex = mainBaseHexForNoLock; 
+        } else {
+          // ถ้ามีสีล็อคอยู่ ให้สุ่มหยิบ 1 สีจากตะกร้ามาเป็นฐานสำหรับช่องนี้
+          const randomIndex = Math.floor(Math.random() * lockedColors.length);
+          baseHex = lockedColors[randomIndex];
+        }
+
+        const { r, g, b } = hexToRgb(baseHex);
+        const baseHsl = rgbToHsl(r, g, b);
+
+        // หมุนองศาสี (Hue) ตามวงล้อสี (ขยับทีละ 30 องศา คูณด้วยตัวนับ)
+        let newHue = (baseHsl.h + (offsetCounter * 30) + Math.floor(Math.random() * 20) - 10) % 360; 
+        if (newHue < 0) newHue += 360;
+
+        // ปรับความสด (S) และสว่าง (L) ให้อยู่ในโทนที่สวยงาม
+        let newSat = Math.max(20, Math.min(100, baseHsl.s + Math.floor(Math.random() * 30) - 15));
+        let newLight = Math.max(20, Math.min(80, baseHsl.l + Math.floor(Math.random() * 30) - 15));
+
+        const newRgb = hslToRgb(newHue, newSat, newLight);
+        return rgbToHex(newRgb.r, newRgb.g, newRgb.b);
+      };
+
+      let offset = 1; // ตัวคูณเพื่อกระจายสี
+
+      // 4. อัปเดตช่อง Primary 
+      // (ถ้ามีสีล็อคอยู่แล้ว primary ไม่ได้ล็อค ก็ให้อิงจากตะกร้าสีล็อค)
+      // (ถ้าไม่มีใครล็อคเลย เราอัปเดตไปแล้วในข้อ 2 จึงข้ามขั้นตอนนี้ไปได้)
+      if (lockedColors.length > 0) {
+          setPrimary(prev => {
+            if (prev.isLocked) return prev;
+            return { ...prev, value: getHarmoniousHex(offset++) };
+          });
+      }
+
+      // 5. อัปเดตช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อค)
+      setSecondary(prev => prev.map(slot => {
+        if (slot.isLocked) return slot;
+        return { ...slot, value: getHarmoniousHex(offset++) };
+      }));
+
+    } else {
+      console.log(`คุณกำลังกด Generate สีในโทน: ${activeMood} (กำลังพัฒนาฟีเจอร์นี้)`);
+    }
+  };
+
   // 📍 2. State ควบคุมหน้าต่าง Save Palette
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -362,7 +456,7 @@ const GenerateSidebar = () => {
         <div className="mood-grid">
           {moods.map(mood => <button key={mood} className={`mood-btn ${activeMood === mood ? 'active' : ''}`} onClick={() => setActiveMood(mood)}>{mood}</button>)}
         </div>
-        <button className="generate-btn"><div className="gen-btn-text">Generate Color</div></button>
+        <button className="generate-btn" onClick={handleGenerateColors} ><div className="gen-btn-text">Generate Color</div></button>
       </div>
 
       <div className="sidebar-section palette-section">

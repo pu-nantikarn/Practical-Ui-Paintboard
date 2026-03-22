@@ -1,7 +1,8 @@
 // ไฟล์: src/frontend/ImageSidebar.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 // 📍 เอา colorthief ออก เพราะเราจะใช้อัลกอริทึม Clustering ของเราเอง
 import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle, CheckCircle } from 'lucide-react';
+import { ColorContext } from '../contexts/ColorContext';
 
 // นำเข้า CSS และ Component Modal
 import './GenerateSidebar.css';
@@ -343,19 +344,7 @@ const ImageSidebar = () => {
         return savedImage ? savedImage : null;
     });
 
-    const [primary, setPrimary] = useState(() => {
-        const saved = localStorage.getItem('imgPrimary');
-        return saved ? JSON.parse(saved) : { value: '8B5CF6', isLocked: false };
-    });
-
-    const [secondary, setSecondary] = useState(() => {
-        const saved = localStorage.getItem('imgSecondary');
-        return saved ? JSON.parse(saved) : [
-            { id: 1, value: 'F9FAFB', isLocked: false },
-            { id: 2, value: '000000', isLocked: false },
-            { id: 3, value: 'E5E7EB', isLocked: false },
-        ];
-    });
+    const { imgPrimary: primary, setImgPrimary: setPrimary, imgSecondary: secondary, setImgSecondary: setSecondary } = useContext(ColorContext);
 
     const [openPopover, setOpenPopover] = useState({ type: null, id: null });
     const neutralShades = generateNeutralShades(primary.value);
@@ -399,9 +388,6 @@ const ImageSidebar = () => {
             localStorage.removeItem('imgUploaded');
         }
     }, [uploadedImage]);
-
-    useEffect(() => localStorage.setItem('imgPrimary', JSON.stringify(primary)), [primary]);
-    useEffect(() => localStorage.setItem('imgSecondary', JSON.stringify(secondary)), [secondary]);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];

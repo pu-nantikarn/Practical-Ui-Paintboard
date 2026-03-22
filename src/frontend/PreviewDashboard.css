@@ -1,0 +1,418 @@
+/* ไฟล์: src/frontend/PreviewDashboard.css */
+
+.preview-dashboard {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ซ่อน Scrollbar */
+.preview-dashboard::-webkit-scrollbar { width: 0px; }
+
+/* -------------------
+   Global Elements
+------------------- */
+.dash-card {
+    border: 1px solid;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+
+h2, h3, p { margin: 0; }
+
+/* 📍 Utility classes to slightly increase visual density to fill space */
+.kpi-card { padding: 18px 16px; }
+.treemap-card, .resource-card { padding-bottom: 20px; }
+.donut-card, .growth-card, .quick-card { padding-bottom: 20px; }
+
+/* -------------------
+   Row 1: KPI Cards
+------------------- */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.kpi-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trend {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.kpi-title { font-size: 10px; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.5px;}
+.kpi-value { font-size: 20px; font-weight: 700; }
+
+/* -------------------
+   Main Grid Layout
+------------------- */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: start; /* 📍 ป้องกันไม่ให้คอลัมน์ซ้ายยืดตามคอลัมน์ขวา */
+    padding-bottom: 36px;
+}
+
+.dash-col-left, .dash-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.inner-row {
+    display: flex;
+    gap: 16px;
+}
+
+/* -------------------
+   Line Chart
+------------------- */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.toggle-group {
+    display: flex;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.toggle-group button {
+    border: none;
+    background: transparent;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.mock-line-chart {
+    width: 100%;
+    height: 120px;
+    margin-bottom: 10px;
+}
+
+.chart-x-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* -------------------
+   Treemap (Grid)
+------------------- */
+.mock-treemap {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 60px 40px;
+    gap: 6px;
+}
+
+.tm-box {
+    border-radius: 6px;
+    padding: 8px;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.tm-large { grid-column: span 2; grid-row: span 2; font-size: 14px;}
+.tm-wide { grid-column: span 2; grid-row: span 1; }
+.tm-small { grid-column: span 1; grid-row: span 1; }
+
+/* -------------------
+   Stacked Bars
+------------------- */
+.stacked-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sb-item { display: flex; flex-direction: column; gap: 6px;}
+.sb-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600;}
+.sb-track { width: 100%; height: 8px; border-radius: 4px; display: flex; overflow: hidden; }
+.sb-fill { height: 100%; }
+
+/* -------------------
+   Gantt Chart
+------------------- */
+.mock-gantt {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* 📍 เพิ่มพื้นที่ด้านล่าง Gantt ให้เต็ม card มากขึ้น */
+    padding-bottom: 10px; 
+}
+
+.g-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.g-row > span { font-size: 9px; font-weight: 600; width: 45px; text-transform: uppercase; letter-spacing: 0.3px;}
+.g-track { flex: 1; height: 16px; border-radius: 8px; position: relative; overflow: hidden;}
+.g-bar { 
+    position: absolute; height: 100%; border-radius: 8px; 
+    color: white; font-size: 9px; font-weight: 600; 
+    display: flex; align-items: center; padding-left: 8px;
+    white-space: nowrap;
+}
+
+/* -------------------
+   📍 Radar Chart (Product Performance)
+------------------- */
+.radar-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-header-sm {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kpi-icon-sm {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radar-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 180px; /* 📍 กำหนดความสูงเพื่อให้การไล่สีดูไม่ก้าวเข้มไป */
+    width: 100%;
+    margin: 10px 0;
+}
+
+.mock-radar-chart {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+}
+
+.radar-labels span {
+    position: absolute;
+    font-size: 9px;
+    font-weight: 500;
+    transform: translate(-50%, -50%);
+    transition: color 0.3s ease;
+}
+
+/* rough positioning for hexagons labels at height 180px */
+.label-top { top: 3%; left: 50%; }
+.label-top-right { top: 25%; left: 90%; text-align: left;}
+.label-bottom-right { top: 75%; left: 90%; text-align: left;}
+.label-bottom { top: 97%; left: 50%; }
+.label-bottom-left { top: 75%; left: 10%; text-align: right;}
+.label-top-left { top: 25%; left: 10%; text-align: right;}
+
+.radar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+.radar-legend > div { display: flex; align-items: center; gap: 6px;}
+.radar-legend span { width: 10px; height: 10px; border-radius: 30%; border: 1.5px solid transparent; display: block;}
+.legend-target { border-style: dashed !important; border-width: 1px !important; background: none !important;}
+.radar-legend p { font-size: 10px; font-weight: 500;}
+
+/* -------------------
+   Donut Chart
+------------------- */
+.donut-container { display: flex; align-items: center; gap: 20px;}
+.donut-card { height: 100%; } /* 📍 Ensure it fills column */
+
+.mock-donut {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    position: relative;
+    display: flex; justify-content: center; align-items: center;
+    transition: background 0.3s ease;
+}
+.donut-inner {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.donut-inner h2 { font-size: 18px; font-weight: 700;}
+.donut-inner p { font-size: 8px; font-weight: 600;}
+
+.donut-legend { display: flex; flex-direction: column; gap: 8px;}
+.donut-legend > div { display: flex; align-items: center; gap: 6px;}
+.donut-legend span { width: 8px; height: 8px; border-radius: 50%;}
+.donut-legend p { font-size: 10px; font-weight: 500;}
+
+/* -------------------
+   Bar Chart
+------------------- */
+.mock-bar-chart {
+    display: flex;
+    justify-content: space-between;
+    height: 100px;
+    padding-top: 10px;
+}
+
+.bar-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1;}
+.bar-wrapper { flex: 1; width: 8px; display: flex; align-items: flex-end;}
+.bar-fill { width: 100%; border-radius: 4px; transition: height 0.3s ease, background-color 0.3s ease;}
+.bar-col > span { font-size: 9px; font-weight: 600;}
+
+/* -------------------
+   Activity Feed
+------------------- */
+.activity-list { display: flex; flex-direction: column; gap: 16px;}
+.act-item { display: flex; align-items: center; gap: 12px;}
+.act-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;}
+.act-text p { font-size: 11px;}
+.act-text span { font-size: 9px; font-weight: 500;}
+
+/* -------------------
+   Quick Actions
+------------------- */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px; /* 📍 slightly increased gap */
+}
+
+.quick-actions-grid button {
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.quick-actions-grid button:hover { opacity: 0.8;}
+
+/* -------------------
+   📍 Storage Usage (Gauge / Half-Donut Chart)
+------------------- */
+.storage-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gauge-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* ให้กราฟชิดล่าง */
+    height: 80px;
+}
+
+.mock-gauge-chart {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    overflow: visible; /* ป้องกันไม่ให้ stroke โดนตัด */
+}
+
+.gauge-center-text {
+    position: absolute;
+    bottom: -5px; /* ดันข้อความลงมานิดหน่อยให้อยู่ตรงกลางโค้งพอดี */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gauge-center-text h2 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.gauge-center-text p {
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.storage-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(0,0,0,0.1); /* เส้นประแบ่งโซนบางๆ */
+}
+
+.storage-item {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+}
+
+.storage-item .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.storage-item span:nth-child(2) {
+    flex: 1; /* ดัน strong ไปชิดขวา */
+}
+
+.storage-item strong {
+    font-weight: 600;
+}

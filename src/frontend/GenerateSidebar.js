@@ -1,10 +1,11 @@
 // ไฟล์: src/components/Sidebar.js (หรือ src/frontend/GenerateSidebar.js)
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, CheckCircle } from 'lucide-react';
 import './GenerateSidebar.css';
 import { supabase } from '../backend/supabaseClient';
 // 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
 import SavePalette from '../frontend/SavePalette';
+import { ColorContext } from '../contexts/ColorContext';
 
 //function generate random color
 const getRandomHex = () => {
@@ -306,21 +307,13 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 const GenerateSidebar = () => {
   const moods = ['Random', 'Harmony', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
+  const { genPrimary: primary, setGenPrimary: setPrimary, genSecondary: secondary, setGenSecondary: setSecondary } = useContext(ColorContext);
   // --- 1. State ของสี และการจดจำค่า (localStorage) ---
   const [activeMood, setActiveMood] = useState(() => {
     const saved = localStorage.getItem('genMood');
     return saved ? saved : 'Random';
   });
 
-  const [primary, setPrimary] = useState(() => {
-    const saved = localStorage.getItem('genPrimary');
-    return saved ? JSON.parse(saved) : { value: '8B5CF6', isLocked: false };
-  });
-
-  const [secondary, setSecondary] = useState(() => {
-    const saved = localStorage.getItem('genSecondary');
-    return saved ? JSON.parse(saved) : [{ id: 1, value: '1F2937', isLocked: false }];
-  });
 
   const [openPopover, setOpenPopover] = useState({ type: null, id: null });
   const neutralShades = generateNeutralShades(primary.value);
@@ -436,14 +429,6 @@ const GenerateSidebar = () => {
   useEffect(() => {
     localStorage.setItem('genMood', activeMood);
   }, [activeMood]);
-
-  useEffect(() => {
-    localStorage.setItem('genPrimary', JSON.stringify(primary));
-  }, [primary]);
-
-  useEffect(() => {
-    localStorage.setItem('genSecondary', JSON.stringify(secondary));
-  }, [secondary]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

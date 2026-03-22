@@ -1,6 +1,6 @@
 // ไฟล์: src/components/Sidebar.js (หรือ src/frontend/GenerateSidebar.js)
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy } from 'lucide-react';
+import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, CheckCircle } from 'lucide-react';
 import './GenerateSidebar.css';
 import { supabase } from '../backend/supabaseClient';
 // 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
@@ -112,6 +112,40 @@ const generateShades = (baseHex) => {
   return shades;
 };
 
+// ==========================================
+// 📍 ฟังก์ชันสร้าง Tinted Neutral (ปรับสมดุลสายตามนุษย์ - Easing Curve)
+// ==========================================
+const generateNeutralShades = (primaryHex) => {
+    const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
+    const { r, g, b } = hexToRgb(baseColor);
+    const baseHsl = rgbToHsl(r, g, b); 
+    
+    const tintSaturation = baseHsl.s === 0 ? 0 : 4; 
+
+    // 📍 1. ปรับจุดเริ่มต้นให้อ่อน (สว่าง) กว่าเดิม
+    const maxLightness = 98; // ปรับจาก 97 เป็น 99 เพื่อให้ช่องแรกสว่างเกือบสุด
+    const minLightness = 5;  // ช่องสุดท้ายยังคงมืดลึกๆ ไว้
+
+    const shades = [];
+    
+    for (let i = 0; i <= 10; i++) {
+        // หาอัตราส่วนการเดินทาง (จาก 0 ถึง 1)
+        let progress = i / 10; 
+        
+        // 📍 2. โค้ดพระเอก: ใช้สมการยกกำลัง (Curve) เพื่อดัดเส้นตรงให้โค้ง
+        // เลข 1.3 คือ "ความหน่วง" (ลองปรับได้ตั้งแต่ 1.2 - 1.5)
+        // ยิ่งเลขเยอะ สีช่วงแรกจะยิ่งอ่อนและสว่างนานขึ้น
+        let easedProgress = Math.pow(progress, 1.3); 
+        
+        // คำนวณความสว่างโดยใช้ค่าที่ถูกดัดให้โค้งแล้ว
+        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness)); 
+        
+        const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
+        shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
+    }
+    
+    return shades;
+};
 
 
 // ==========================================
@@ -270,7 +304,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
 const GenerateSidebar = () => {
-  const moods = ['Random', 'Harmony','Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
+  const moods = ['Random', 'Harmony', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
   // --- 1. State ของสี และการจดจำค่า (localStorage) ---
   const [activeMood, setActiveMood] = useState(() => {
@@ -289,7 +323,7 @@ const GenerateSidebar = () => {
   });
 
   const [openPopover, setOpenPopover] = useState({ type: null, id: null });
-  const neutralShades = generateShades('6B7280');
+  const neutralShades = generateNeutralShades(primary.value);
 
   const handleGenerateColors = () => {
     // ถ้ายอมรับว่าผู้ใช้เลือกโหมด Random หรือ Mix ให้สุ่มสี
@@ -311,7 +345,7 @@ const GenerateSidebar = () => {
 
     } else if (activeMood === 'Harmony') {
       // 📍 โหมด Harmony: สุ่มสีแบบอิงทฤษฎีสี (พิจารณาทุกสีที่ถูกล็อค หรืออิง Primary ถ้าไม่มีล็อค)
-      
+
       // 1. เก็บสีที่ถูกล็อคทั้งหมดลงตะกร้า (Array)
       const lockedColors = [];
       if (primary.isLocked) lockedColors.push(primary.value);
@@ -332,10 +366,10 @@ const GenerateSidebar = () => {
       // 3. ฟังก์ชันย่อย: สร้างสีที่กลมกลืน โดยอิงจากตะกร้าสีที่ล็อคไว้ (หรือสีฐานใหม่)
       const getHarmoniousHex = (offsetCounter) => {
         let baseHex;
-        
+
         if (lockedColors.length === 0) {
           // ถ้าไม่มีสีไหนล็อคเลย ให้ใช้ mainBaseHexForNoLock (Primary ที่เพิ่งสุ่ม) เป็นฐานเสมอ
-          baseHex = mainBaseHexForNoLock; 
+          baseHex = mainBaseHexForNoLock;
         } else {
           // ถ้ามีสีล็อคอยู่ ให้สุ่มหยิบ 1 สีจากตะกร้ามาเป็นฐานสำหรับช่องนี้
           const randomIndex = Math.floor(Math.random() * lockedColors.length);
@@ -346,7 +380,7 @@ const GenerateSidebar = () => {
         const baseHsl = rgbToHsl(r, g, b);
 
         // หมุนองศาสี (Hue) ตามวงล้อสี (ขยับทีละ 30 องศา คูณด้วยตัวนับ)
-        let newHue = (baseHsl.h + (offsetCounter * 30) + Math.floor(Math.random() * 20) - 10) % 360; 
+        let newHue = (baseHsl.h + (offsetCounter * 30) + Math.floor(Math.random() * 20) - 10) % 360;
         if (newHue < 0) newHue += 360;
 
         // ปรับความสด (S) และสว่าง (L) ให้อยู่ในโทนที่สวยงาม
@@ -363,10 +397,10 @@ const GenerateSidebar = () => {
       // (ถ้ามีสีล็อคอยู่แล้ว primary ไม่ได้ล็อค ก็ให้อิงจากตะกร้าสีล็อค)
       // (ถ้าไม่มีใครล็อคเลย เราอัปเดตไปแล้วในข้อ 2 จึงข้ามขั้นตอนนี้ไปได้)
       if (lockedColors.length > 0) {
-          setPrimary(prev => {
-            if (prev.isLocked) return prev;
-            return { ...prev, value: getHarmoniousHex(offset++) };
-          });
+        setPrimary(prev => {
+          if (prev.isLocked) return prev;
+          return { ...prev, value: getHarmoniousHex(offset++) };
+        });
       }
 
       // 5. อัปเดตช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อค)
@@ -439,15 +473,24 @@ const GenerateSidebar = () => {
   const handleAddSecondary = () => { if (secondary.length < 5) setSecondary(prev => [...prev, { id: Date.now(), value: '000000', isLocked: false }]); };
   const handleRemoveSecondary = (id) => { setSecondary(prev => prev.filter(s => s.id !== id)); if (openPopover.id === id) setOpenPopover({ type: null, id: null }); };
 
+  const [copyFeedback, setCopyFeedback] = useState(null);
+
   const handleCopy = (e, hexCode) => {
-    if (e) e.stopPropagation(); // ป้องกันไม่ให้คลิกทะลุไปเปิด Modal อื่น
+    if (e) e.stopPropagation();
     navigator.clipboard.writeText(hexCode).then(() => {
+      // 📍 อัปเดต State เพื่อโชว์แจ้งเตือน
+      setCopyFeedback(`Copied #${hexCode}!`);
+
+      // 📍 ตั้งเวลาให้แจ้งเตือนหายไปเองใน 2 วินาที (2000 ms)
+      setTimeout(() => {
+        setCopyFeedback(null);
+      }, 2000);
+
       console.log(`Copied: ${hexCode}`);
-      // หากคุณมี Toast/Alert สามารถเรียกใช้ตรงนี้ได้ เช่น alert(`คัดลอก #${hexCode} แล้ว`);
     }).catch(err => {
       console.error('Failed to copy!', err);
     });
-  };
+  };;
 
   return (
     <aside className="sidebar-container">
@@ -554,6 +597,12 @@ const GenerateSidebar = () => {
         colors={currentColors}
         userId={userId}
       />
+      {copyFeedback && (
+        <div className="copy-feedback-toast">
+          <CheckCircle size={16} />
+          {copyFeedback}
+        </div>
+      )}
 
     </aside> /* 📍 4. ปิด Sidebar Container นอกสุด */
   );

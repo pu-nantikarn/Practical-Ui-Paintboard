@@ -1,7 +1,7 @@
 // ไฟล์: src/frontend/ImageSidebar.js
 import React, { useState, useEffect, useRef } from 'react';
 // 📍 เอา colorthief ออก เพราะเราจะใช้อัลกอริทึม Clustering ของเราเอง
-import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle } from 'lucide-react';
+import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle, CheckCircle } from 'lucide-react';
 
 // นำเข้า CSS และ Component Modal
 import './GenerateSidebar.css';
@@ -171,6 +171,42 @@ const generateShades = (baseHex) => {
 };
 
 // ==========================================
+// 📍 ฟังก์ชันสร้าง Tinted Neutral (Off-White ถึง Off-Black)
+// ==========================================
+const generateNeutralShades = (primaryHex) => {
+    const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
+    const { r, g, b } = hexToRgb(baseColor);
+    const baseHsl = rgbToHsl(r, g, b); 
+    
+    const tintSaturation = baseHsl.s === 0 ? 0 : 4; 
+
+    // 📍 1. ปรับจุดเริ่มต้นให้อ่อน (สว่าง) กว่าเดิม
+    const maxLightness = 98; // ปรับจาก 97 เป็น 99 เพื่อให้ช่องแรกสว่างเกือบสุด
+    const minLightness = 5;  // ช่องสุดท้ายยังคงมืดลึกๆ ไว้
+
+    const shades = [];
+    
+    for (let i = 0; i <= 10; i++) {
+        // หาอัตราส่วนการเดินทาง (จาก 0 ถึง 1)
+        let progress = i / 10; 
+        
+        // 📍 2. โค้ดพระเอก: ใช้สมการยกกำลัง (Curve) เพื่อดัดเส้นตรงให้โค้ง
+        // เลข 1.3 คือ "ความหน่วง" (ลองปรับได้ตั้งแต่ 1.2 - 1.5)
+        // ยิ่งเลขเยอะ สีช่วงแรกจะยิ่งอ่อนและสว่างนานขึ้น
+        let easedProgress = Math.pow(progress, 1.3); 
+        
+        // คำนวณความสว่างโดยใช้ค่าที่ถูกดัดให้โค้งแล้ว
+        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness)); 
+        
+        const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
+        shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
+    }
+    
+    return shades;
+};
+
+
+// ==========================================
 // 🎨 Component ย่อย: หน้าต่าง Color Picker 
 // ==========================================
 const FloatingPicker = ({ hex, onChange }) => {
@@ -322,7 +358,7 @@ const ImageSidebar = () => {
     });
 
     const [openPopover, setOpenPopover] = useState({ type: null, id: null });
-    const neutralShades = generateShades('6B7280');
+    const neutralShades = generateNeutralShades(primary.value);
 
     // 📍 2. เพิ่ม State สำหรับเก็บสีทั้งหมดที่ดูดได้ และไว้เปิด/ปิดหน้าต่างย่อย
     const [allExtractedColors, setAllExtractedColors] = useState([]);
@@ -469,11 +505,23 @@ const ImageSidebar = () => {
     const handleAddSecondary = () => { if (secondary.length < 5) setSecondary(prev => [...prev, { id: Date.now(), value: '000000', isLocked: false }]); };
     const handleRemoveSecondary = (id) => { setSecondary(prev => prev.filter(s => s.id !== id)); if (openPopover.id === id) setOpenPopover({ type: null, id: null }); };
 
+    const [copyFeedback, setCopyFeedback] = useState(null);
+
     const handleCopy = (e, hexCode) => {
         if (e) e.stopPropagation();
         navigator.clipboard.writeText(hexCode).then(() => {
+            // 📍 อัปเดต State เพื่อโชว์แจ้งเตือน
+            setCopyFeedback(`Copied #${hexCode}!`);
+
+            // 📍 ตั้งเวลาให้แจ้งเตือนหายไปเองใน 2 วินาที (2000 ms)
+            setTimeout(() => {
+                setCopyFeedback(null);
+            }, 2000);
+
             console.log(`Copied: ${hexCode}`);
-        }).catch(err => console.error('Failed to copy!', err));
+        }).catch(err => {
+            console.error('Failed to copy!', err);
+        });
     };
 
     return (
@@ -607,6 +655,13 @@ const ImageSidebar = () => {
             )}
 
             <SavePaletteModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} colors={currentColors} userId={userId} />
+            {/* 📍 UI สำหรับแสดงผล Copied Feedback */}
+            {copyFeedback && (
+                <div className="copy-feedback-toast">
+                    <CheckCircle size={16} />
+                    {copyFeedback}
+                </div>
+            )}
         </aside>
     );
 };

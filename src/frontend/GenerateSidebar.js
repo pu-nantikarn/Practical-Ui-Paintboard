@@ -1,18 +1,18 @@
-// ไฟล์: src/components/Sidebar.js (หรือ src/frontend/GenerateSidebar.js)
+// ไฟล์: src/frontend/GenerateSidebar.js
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, CheckCircle } from 'lucide-react';
 import './GenerateSidebar.css';
 import { supabase } from '../backend/supabaseClient';
-// 📍 นำเข้า Component SavePaletteModal (เช็ค path ให้ตรงกับที่ไฟล์คุณอยู่ด้วยนะครับ)
 import SavePalette from '../frontend/SavePalette';
 import { ColorContext } from '../contexts/ColorContext';
 
-//function generate random color
+// function generate random color
 const getRandomHex = () => {
   return Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
 };
+
 // ==========================================
-// 🛠️ Color Math Helpers (สมการคำนวณสีระดับโปร)
+// 🛠️ Color Math Helpers
 // ==========================================
 const getContrastColor = (hex) => {
   if (hex.length !== 6) return '#000000';
@@ -113,41 +113,24 @@ const generateShades = (baseHex) => {
   return shades;
 };
 
-// ==========================================
-// 📍 ฟังก์ชันสร้าง Tinted Neutral (ปรับสมดุลสายตามนุษย์ - Easing Curve)
-// ==========================================
 const generateNeutralShades = (primaryHex) => {
-    const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
-    const { r, g, b } = hexToRgb(baseColor);
-    const baseHsl = rgbToHsl(r, g, b); 
-    
-    const tintSaturation = baseHsl.s === 0 ? 0 : 4; 
+  const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
+  const { r, g, b } = hexToRgb(baseColor);
+  const baseHsl = rgbToHsl(r, g, b);
+  const tintSaturation = baseHsl.s === 0 ? 0 : 4;
+  const maxLightness = 98;
+  const minLightness = 5;
+  const shades = [];
 
-    // 📍 1. ปรับจุดเริ่มต้นให้อ่อน (สว่าง) กว่าเดิม
-    const maxLightness = 98; // ปรับจาก 97 เป็น 99 เพื่อให้ช่องแรกสว่างเกือบสุด
-    const minLightness = 5;  // ช่องสุดท้ายยังคงมืดลึกๆ ไว้
-
-    const shades = [];
-    
-    for (let i = 0; i <= 10; i++) {
-        // หาอัตราส่วนการเดินทาง (จาก 0 ถึง 1)
-        let progress = i / 10; 
-        
-        // 📍 2. โค้ดพระเอก: ใช้สมการยกกำลัง (Curve) เพื่อดัดเส้นตรงให้โค้ง
-        // เลข 1.3 คือ "ความหน่วง" (ลองปรับได้ตั้งแต่ 1.2 - 1.5)
-        // ยิ่งเลขเยอะ สีช่วงแรกจะยิ่งอ่อนและสว่างนานขึ้น
-        let easedProgress = Math.pow(progress, 1.3); 
-        
-        // คำนวณความสว่างโดยใช้ค่าที่ถูกดัดให้โค้งแล้ว
-        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness)); 
-        
-        const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
-        shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
-    }
-    
-    return shades;
+  for (let i = 0; i <= 10; i++) {
+    let progress = i / 10;
+    let easedProgress = Math.pow(progress, 1.3);
+    let lightness = maxLightness - (easedProgress * (maxLightness - minLightness));
+    const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
+    shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
+  }
+  return shades;
 };
-
 
 // ==========================================
 // 🎨 Component ย่อย: หน้าต่าง Color Picker 
@@ -288,8 +271,8 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
         <div
           key={index}
           className="shade-cell"
-          style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} // 📍 เพิ่ม cursor
-          onClick={(e) => onCopy(e, shade)} // 📍 เพิ่ม onClick สำหรับ Copy
+          style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
+          onClick={(e) => onCopy(e, shade)}
           title={`Click to copy: #${shade}`}
         >
           <span className="shade-text" style={{ color: getContrastColor(shade) }}>#{shade}</span>
@@ -304,79 +287,127 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
-const GenerateSidebar = () => {
+const GenerateSidebar = ({ paletteToEdit, onExitEditingMode }) => {
   const moods = ['Random', 'Harmony', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
   const { genPrimary: primary, setGenPrimary: setPrimary, genSecondary: secondary, setGenSecondary: setSecondary } = useContext(ColorContext);
-  // --- 1. State ของสี และการจดจำค่า (localStorage) ---
+
   const [activeMood, setActiveMood] = useState(() => {
     const saved = localStorage.getItem('genMood');
     return saved ? saved : 'Random';
   });
 
+  const isEditingSavedPalette = paletteToEdit !== null;
+
+  // 📍 1. สร้าง State สำหรับรับสี Neutral เก่าจาก DB
+  const [loadedNeutralShades, setLoadedNeutralShades] = useState([]);
+
+  // โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
+  useEffect(() => {
+    if (paletteToEdit) {
+      const details = paletteToEdit.paletteDetail || [];
+
+      // 📍 แยกสีหลัก (Primary & Secondary ไม่เกิน 6 สี)
+      const mainColors = details
+        .filter(d => String(d.role_id) !== '3')
+        .sort((a, b) => a.order_index - b.order_index)
+        .slice(0, 6);
+
+      // 📍 แยกสี Neutral (Role 3 หรือ สีที่เกินมาจาก 6 อันแรก)
+      const dbNeutralColors = details
+        .filter(d => String(d.role_id) === '3' || d.order_index > 6)
+        .sort((a, b) => a.order_index - b.order_index);
+
+      if (mainColors.length > 0) {
+        const primaryHex = mainColors[0].color?.hex_value?.replace('#', '') || 'FFFFFF';
+        setPrimary({ id: 'primary', value: primaryHex, isLocked: false });
+
+        const newSecondary = mainColors.slice(1, 6).map((detail, index) => ({
+          id: `sec-${Date.now()}-${index}`,
+          value: detail.color?.hex_value?.replace('#', '') || 'CCCCCC',
+          isLocked: false
+        }));
+        setSecondary(newSecondary);
+      }
+
+      // 📍 เอาสี Neutral เก่ามาเก็บไว้ใน State
+      if (dbNeutralColors.length > 0) {
+        setLoadedNeutralShades(dbNeutralColors.map(d => d.color?.hex_value?.replace('#', '') || 'CCCCCC'));
+      } else {
+        setLoadedNeutralShades([]);
+      }
+    } else {
+      setLoadedNeutralShades([]); // ล้างค่าเมื่อออกจากโหมด Edit
+    }
+  }, [paletteToEdit, setPrimary, setSecondary]);
+
+  // 📍 2. ตัดสินใจว่าจะใช้สี Neutral จาก DB หรือ Generate ใหม่
+  const autoNeutralShades = generateNeutralShades(primary.value);
+  const displayNeutralShades = loadedNeutralShades.length > 0 ? loadedNeutralShades : autoNeutralShades;
 
   const [openPopover, setOpenPopover] = useState({ type: null, id: null });
   const neutralShades = generateNeutralShades(primary.value);
 
+  // 📍 State เก็บข้อมูลช่วงสีที่ดึงมาจาก Database
+  const [dbMoodRanges, setDbMoodRanges] = useState({});
+
+  // 📍 1. โหลดข้อมูล MoodTone & Ranges จาก Supabase ทันทีที่เปิด Sidebar
+  useEffect(() => {
+    const fetchMoodRanges = async () => {
+      try {
+        // ดึงข้อมูล 2 ตารางแยกกัน (เพื่อป้องกันปัญหา Foreign key syntax ถ้าเซ็ตไม่ตรง)
+        const { data: moodsData, error: moodsError } = await supabase.from('moodtone').select('*');
+        const { data: rangesData, error: rangesError } = await supabase.from('moodtoneRange').select('*');
+
+        if (moodsError) throw moodsError;
+        if (rangesError) throw rangesError;
+
+        if (moodsData && rangesData) {
+          const formattedRanges = {};
+          moodsData.forEach(mood => {
+            // จับคู่ข้อมูลช่วงสี (ranges) เข้ากับชื่อ mood (mood_name)
+            formattedRanges[mood.mood_name] = rangesData.filter(r => r.mood_id === mood.mood_id);
+          });
+          setDbMoodRanges(formattedRanges);
+          console.log("Loaded Mood Ranges from DB:", formattedRanges);
+        }
+      } catch (error) {
+        console.error("Error fetching mood ranges from Supabase:", error);
+      }
+    };
+
+    fetchMoodRanges();
+  }, []);
+
+  // 📍 2. อัปเดตฟังก์ชันกดปุ่ม Generate ให้สุ่มจากฐานข้อมูล
   const handleGenerateColors = () => {
-    // ถ้ายอมรับว่าผู้ใช้เลือกโหมด Random หรือ Mix ให้สุ่มสี
     if (activeMood === 'Random' || activeMood === 'Mix') {
-
-      // 1. สุ่มสีให้ Primary (ถ้าไม่ได้ถูกล็อกอยู่)
-      setPrimary(prev => {
-        if (prev.isLocked) return prev;
-        return { ...prev, value: getRandomHex() };
-      });
-
-      // 2. สุ่มสีให้ Secondary (เฉพาะช่องที่เปิดอยู่และไม่ได้ล็อก)
-      setSecondary(prev => {
-        return prev.map(slot => {
-          if (slot.isLocked) return slot;
-          return { ...slot, value: getRandomHex() };
-        });
-      });
+      // โหมดสุ่มอิสระ
+      setPrimary(prev => prev.isLocked ? prev : { ...prev, value: getRandomHex() });
+      setSecondary(prev => prev.map(slot => slot.isLocked ? slot : { ...slot, value: getRandomHex() }));
 
     } else if (activeMood === 'Harmony') {
-      // 📍 โหมด Harmony: สุ่มสีแบบอิงทฤษฎีสี (พิจารณาทุกสีที่ถูกล็อค หรืออิง Primary ถ้าไม่มีล็อค)
-
-      // 1. เก็บสีที่ถูกล็อคทั้งหมดลงตะกร้า (Array)
+      // โหมด Harmony (อิงจากสีที่ล็อคไว้)
       const lockedColors = [];
       if (primary.isLocked) lockedColors.push(primary.value);
       secondary.forEach(slot => {
         if (slot.isLocked) lockedColors.push(slot.value);
       });
 
-      // 📍 2. ตัวแปรเก็บสีฐานหลัก (กรณีไม่มีใครล็อคเลย)
       let mainBaseHexForNoLock = null;
-
-      // ถ้าไม่มีสีไหนล็อคเลย เราจะบังคับสุ่มสี Primary ขึ้นมาใหม่ 1 สี เพื่อใช้เป็นเสาหลัก
       if (lockedColors.length === 0) {
         mainBaseHexForNoLock = getRandomHex();
-        // อัปเดตช่อง Primary ให้เป็นสีฐานที่เพิ่งสุ่มได้
         setPrimary({ ...primary, value: mainBaseHexForNoLock });
       }
 
-      // 3. ฟังก์ชันย่อย: สร้างสีที่กลมกลืน โดยอิงจากตะกร้าสีที่ล็อคไว้ (หรือสีฐานใหม่)
       const getHarmoniousHex = (offsetCounter) => {
-        let baseHex;
-
-        if (lockedColors.length === 0) {
-          // ถ้าไม่มีสีไหนล็อคเลย ให้ใช้ mainBaseHexForNoLock (Primary ที่เพิ่งสุ่ม) เป็นฐานเสมอ
-          baseHex = mainBaseHexForNoLock;
-        } else {
-          // ถ้ามีสีล็อคอยู่ ให้สุ่มหยิบ 1 สีจากตะกร้ามาเป็นฐานสำหรับช่องนี้
-          const randomIndex = Math.floor(Math.random() * lockedColors.length);
-          baseHex = lockedColors[randomIndex];
-        }
-
+        let baseHex = lockedColors.length === 0 ? mainBaseHexForNoLock : lockedColors[Math.floor(Math.random() * lockedColors.length)];
         const { r, g, b } = hexToRgb(baseHex);
         const baseHsl = rgbToHsl(r, g, b);
 
-        // หมุนองศาสี (Hue) ตามวงล้อสี (ขยับทีละ 30 องศา คูณด้วยตัวนับ)
         let newHue = (baseHsl.h + (offsetCounter * 30) + Math.floor(Math.random() * 20) - 10) % 360;
         if (newHue < 0) newHue += 360;
 
-        // ปรับความสด (S) และสว่าง (L) ให้อยู่ในโทนที่สวยงาม
         let newSat = Math.max(20, Math.min(100, baseHsl.s + Math.floor(Math.random() * 30) - 15));
         let newLight = Math.max(20, Math.min(80, baseHsl.l + Math.floor(Math.random() * 30) - 15));
 
@@ -384,32 +415,56 @@ const GenerateSidebar = () => {
         return rgbToHex(newRgb.r, newRgb.g, newRgb.b);
       };
 
-      let offset = 1; // ตัวคูณเพื่อกระจายสี
-
-      // 4. อัปเดตช่อง Primary 
-      // (ถ้ามีสีล็อคอยู่แล้ว primary ไม่ได้ล็อค ก็ให้อิงจากตะกร้าสีล็อค)
-      // (ถ้าไม่มีใครล็อคเลย เราอัปเดตไปแล้วในข้อ 2 จึงข้ามขั้นตอนนี้ไปได้)
+      let offset = 1;
       if (lockedColors.length > 0) {
-        setPrimary(prev => {
-          if (prev.isLocked) return prev;
-          return { ...prev, value: getHarmoniousHex(offset++) };
-        });
+        setPrimary(prev => prev.isLocked ? prev : { ...prev, value: getHarmoniousHex(offset++) });
       }
-
-      // 5. อัปเดตช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อค)
-      setSecondary(prev => prev.map(slot => {
-        if (slot.isLocked) return slot;
-        return { ...slot, value: getHarmoniousHex(offset++) };
-      }));
+      setSecondary(prev => prev.map(slot => slot.isLocked ? slot : { ...slot, value: getHarmoniousHex(offset++) }));
 
     } else {
-      console.log(`คุณกำลังกด Generate สีในโทน: ${activeMood} (กำลังพัฒนาฟีเจอร์นี้)`);
+      // 📍 โหมดที่ดึงข้อมูลช่วงสี (H,S,L) มาจาก Database (Playful, Earth, Pastel ฯลฯ)
+      const ranges = dbMoodRanges[activeMood];
+
+      if (!ranges || ranges.length === 0) {
+        console.warn(`ไม่มีข้อมูลช่วงสีสำหรับ ${activeMood} ในระบบ ระบบจะเปลี่ยนเป็นการสุ่มแบบอิสระชั่วคราว`);
+        setPrimary(prev => prev.isLocked ? prev : { ...prev, value: getRandomHex() });
+        setSecondary(prev => prev.map(slot => slot.isLocked ? slot : { ...slot, value: getRandomHex() }));
+        return;
+      }
+
+      // ฟังก์ชันสุ่มสี 1 สีให้อยู่ในกรอบ H, S, L ของมู้ดที่เลือก
+      const getRandomColorFromDB = () => {
+        // 1. สุ่มหยิบ Row (เช่น Pastel อาจจะมี 2 row ให้สุ่ม)
+        const range = ranges[Math.floor(Math.random() * ranges.length)];
+
+        // 2. สุ่มเลขให้อยู่ระหว่างค่า min-max 
+        const h = Math.floor(Math.random() * (range.h_max - range.h_min + 1)) + range.h_min;
+        const s = Math.floor(Math.random() * (range.s_max - range.s_min + 1)) + range.s_min;
+        const l = Math.floor(Math.random() * (range.l_max - range.l_min + 1)) + range.l_min;
+
+        // 3. แปลงกลับเป็น Hex
+        const newRgb = hslToRgb(h, s, l);
+        return rgbToHex(newRgb.r, newRgb.g, newRgb.b);
+      };
+
+      // อัปเดตช่อง Primary (ถ้าไม่ได้ล็อก)
+      setPrimary(prev => {
+        if (prev.isLocked) return prev;
+        return { ...prev, value: getRandomColorFromDB() };
+      });
+
+      // อัปเดตช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อก)
+      setSecondary(prev => {
+        return prev.map(slot => {
+          if (slot.isLocked) return slot;
+          return { ...slot, value: getRandomColorFromDB() };
+        });
+      });
     }
   };
 
-  // 📍 2. State ควบคุมหน้าต่าง Save Palette
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -417,15 +472,11 @@ const GenerateSidebar = () => {
     });
   }, []);
 
-  // 📍 3. ดึงค่าสีทั้งหมดมารวมกันเป็น Array เพื่อส่งไปแสดงในพรีวิวของ Modal
   const currentColors = [
     primary.value,
     ...secondary.map(s => s.value)
-  ].filter(Boolean); // กรองค่าว่างออก
+  ].filter(Boolean);
 
-  const [userId, setUserId] = useState(null);
-
-  // --- 4. useEffect สำหรับ Auto-Save ลงเบราว์เซอร์ ---
   useEffect(() => {
     localStorage.setItem('genMood', activeMood);
   }, [activeMood]);
@@ -440,7 +491,6 @@ const GenerateSidebar = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // --- 5. ฟังก์ชันจัดการสี ---
   const handleHexInput = (val, callback) => {
     const validHex = val.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6).toUpperCase();
     callback(validHex);
@@ -463,22 +513,30 @@ const GenerateSidebar = () => {
   const handleCopy = (e, hexCode) => {
     if (e) e.stopPropagation();
     navigator.clipboard.writeText(hexCode).then(() => {
-      // 📍 อัปเดต State เพื่อโชว์แจ้งเตือน
       setCopyFeedback(`Copied #${hexCode}!`);
-
-      // 📍 ตั้งเวลาให้แจ้งเตือนหายไปเองใน 2 วินาที (2000 ms)
       setTimeout(() => {
         setCopyFeedback(null);
       }, 2000);
-
       console.log(`Copied: ${hexCode}`);
     }).catch(err => {
       console.error('Failed to copy!', err);
     });
-  };;
+  };
 
   return (
     <aside className="sidebar-container">
+      {/* 📍 เพิ่ม UI ส่วนหัวเมื่ออยู่ในโหมดแก้ไขจานสี */}
+      {isEditingSavedPalette && (
+        <div className="edit-mode-header">
+          <div className="edit-mode-info">
+            <span className="edit-mode-label">Editing Palette</span>
+            <span className="edit-mode-name">{paletteToEdit.palette_name}</span>
+          </div>
+          <button className="exit-edit-btn" onClick={onExitEditingMode}>
+            Create New
+          </button>
+        </div>
+      )}
       <div className="sidebar-section mood-section">
         <h3 className="section-title">Mood & Tone</h3>
         <div className="mood-grid">
@@ -494,24 +552,17 @@ const GenerateSidebar = () => {
           <div className="input-wrapper">
             <button className="color-circle-btn" style={{ backgroundColor: `#${primary.value || 'FFF'}` }} onClick={() => togglePopover('picker', 'primary')} />
             <span className="hex-prefix">#</span>
-
-            {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
             <input type="text" value={primary.value} onChange={(e) => handleHexInput(e.target.value, (val) => setPrimary({ ...primary, value: val }))} readOnly={primary.isLocked} className={primary.isLocked ? 'locked-input' : ''} />
-
             <div className="action-group">
               <button className="action-icon" onClick={() => togglePopover('gradient', 'primary')}><Palette size={16} /></button>
-
-              {/* ปุ่ม Copy */}
-              <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex">
-                <Copy size={16} />
-              </button>
-
+              <button className="action-icon" onClick={(e) => handleCopy(e, primary.value)} title="Copy Hex"><Copy size={16} /></button>
               <button className="action-icon" onClick={() => setPrimary({ ...primary, isLocked: !primary.isLocked })}>{primary.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
             </div>
             {openPopover.type === 'picker' && openPopover.id === 'primary' && <FloatingPicker hex={primary.value} onChange={(hex) => updateColorValue('primary', hex)} />}
             {openPopover.type === 'gradient' && openPopover.id === 'primary' && <FloatingGradient baseHex={primary.value} onCopy={handleCopy} />}
           </div>
         </div>
+
         {/* Secondary Colors */}
         <div className="color-group">
           <label className="section-title">Secondary/ Accent Colors</label>
@@ -520,29 +571,18 @@ const GenerateSidebar = () => {
               <div key={slot.id} className="input-wrapper">
                 <button className="color-circle-btn" style={{ backgroundColor: `#${slot.value || 'FFF'}` }} onClick={() => togglePopover('picker', slot.id)} />
                 <span className="hex-prefix">#</span>
-
-                {/* 📍 ใส่ <input> กลับมาเพื่อแก้ Warning handleInputHex */}
                 <input type="text" value={slot.value} onChange={(e) => handleHexInput(e.target.value, (val) => updateColorValue(slot.id, val))} readOnly={slot.isLocked} className={slot.isLocked ? 'locked-input' : ''} />
-
                 <div className="action-group">
                   <button className="action-icon" onClick={() => handleRemoveSecondary(slot.id)}><Minus size={16} /></button>
                   <button className="action-icon" onClick={() => togglePopover('gradient', slot.id)}><Palette size={16} /></button>
-
-                  {/* ปุ่ม Copy */}
-                  <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex">
-                    <Copy size={16} />
-                  </button>
-
+                  <button className="action-icon" onClick={(e) => handleCopy(e, slot.value)} title="Copy Hex"><Copy size={16} /></button>
                   <button className="action-icon" onClick={() => setSecondary(prev => prev.map(s => s.id === slot.id ? { ...s, isLocked: !s.isLocked } : s))}>{slot.isLocked ? <Lock size={16} /> : <Unlock size={16} />}</button>
                 </div>
                 {openPopover.type === 'picker' && openPopover.id === slot.id && <FloatingPicker hex={slot.value} onChange={(hex) => updateColorValue(slot.id, hex)} />}
                 {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} onCopy={handleCopy} />}
               </div>
             ))}
-
-            {/* 📍 ใส่ปุ่ม Plus (+) กลับมาเพื่อแก้ Warning handleAddSecondary */}
-            {[...Array(5 - secondary.length)].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
-
+            {[...Array(Math.max(0, 5 - secondary.length))].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
           </div>
         </div>
 
@@ -550,7 +590,8 @@ const GenerateSidebar = () => {
         <div className="color-group neutral-group">
           <label className="section-title">Neutral Colors</label>
           <div className="shades-grid neutral-grid">
-            {neutralShades.map((shade, index) => (
+            {/* 📍 เปลี่ยนมาใช้ displayNeutralShades ตรงนี้ */}
+            {displayNeutralShades.map((shade, index) => (
               <div
                 key={index}
                 className="shade-cell"
@@ -565,22 +606,20 @@ const GenerateSidebar = () => {
           </div>
         </div>
 
-      </div> {/* 📍 1. วงเล็บนี้คือการปิด <div className="sidebar-section palette-section"> */}
+      </div>
 
-      {/* 📍 2. ปุ่ม Save Palette ต้องอยู่ นอกวงเล็บด้านบน เพื่อล็อกให้อยู่ล่างสุดเสมอ */}
-      <button
-        className="save-palette-btn"
-        onClick={() => setIsSaveModalOpen(true)}
-      >
-        Save Palette
-      </button>
+      <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
 
-      {/* 📍 3. หน้าต่าง Modal */}
       <SavePalette
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
         colors={currentColors}
+        neutralColors={neutralShades}
         userId={userId}
+        sourceMode="Generate"      // 📍 บอกว่ามาจากโหมด Generate
+        activeMood={activeMood}    // 📍 ส่งชื่อ Mood ปัจจุบันไป
+        paletteToEdit={paletteToEdit}
+        isUpdateMode={isEditingSavedPalette}
       />
       {copyFeedback && (
         <div className="copy-feedback-toast">
@@ -588,8 +627,7 @@ const GenerateSidebar = () => {
           {copyFeedback}
         </div>
       )}
-
-    </aside> /* 📍 4. ปิด Sidebar Container นอกสุด */
+    </aside>
   );
 };
 

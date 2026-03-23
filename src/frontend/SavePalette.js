@@ -1,16 +1,22 @@
 // ไฟล์: src/frontend/SavePalette.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { Folder, ChevronDown } from 'lucide-react';
-import { supabase } from '../backend/supabaseClient'; // อ้างอิง Path ให้ถูกต้อง
-import './SavePalette.css'; // อ้างอิงชื่อไฟล์ CSS ให้ตรง
+import { supabase } from '../backend/supabaseClient'; 
+import './SavePalette.css'; 
 
 const SavePalette = ({
     isOpen,
     onClose,
-    colors,
+    colors, // colors ปัจจุบันที่แสดงผลอยู่ใน Sidebar (ซึ่งอาจจะถูกแก้ไขแล้ว)
+    neutralColors = [],
     userId,
-    sourceId = 1,
-    moodId = null
+    sourceMode = 'Generate',
+    activeMood = 'Random', 
+    // ====== 📍 ส่วนที่เพิ่มเข้ามาใหม่สำหรับโหมด Update ======
+    paletteToEdit = null,        // ข้อมูลจานสีเดิมจาก DB
+    isUpdateMode = false,        // บอกว่าตอนนี้คือโหมดอัปเดต
+    onUpdateSuccess = null      // callback ฟังก์ชันหลังจากอัปเดตสำเร็จ
+    // ===================================================
 }) => {
     const [paletteName, setPaletteName] = useState('My Palette');
     const [selectedCollection, setSelectedCollection] = useState(null);
@@ -34,168 +40,207 @@ const SavePalette = ({
 
     useEffect(() => {
         const refreshData = async () => {
-        if (isOpen && userId) {
-            console.log("Refreshing collections for SavePalette..."); // ไว้สำหรับเช็คใน Console
-            await fetchCollections(); // 👈 สั่งดึงข้อมูลคอลเลกชันใหม่จาก DB
-            setPaletteName('My Palette');
-            setSelectedCollection(null);
-        }
-    };
-
-    refreshData();
-}, [isOpen, userId, fetchCollections]);
+            if (isOpen && userId) {
+                await fetchCollections();
+                
+                // ====== 📍 กำหนดค่าเริ่มต้นตามโหมด (New/Update) ======
+                if (isUpdateMode && paletteToEdit) {
+                    setPaletteName(paletteToEdit.palette_name);
+                    setSelectedCollection(paletteToEdit.collection_id);
+                } else {
+                    setPaletteName('My Palette');
+                    setSelectedCollection(null);
+                }
+                // ====================================================
+            }
+        };
+        refreshData();
+    }, [isOpen, userId, fetchCollections, isUpdateMode, paletteToEdit]);
 
     const handleOverlayClick = (e) => {
         if (e.target.className === 'save-modal-overlay') onClose();
     };
 
     const handleToggleCollection = (id) => {
-        if (selectedCollection === id) {
-            setSelectedCollection(null);
-        } else {
-            setSelectedCollection(id);
-        }
+        setSelectedCollection(selectedCollection === id ? null : id);
     };
 
-    // 🚀 ฟังก์ชันหลักสำหรับบันทึกข้อมูล
-   // 🚀 ฟังก์ชันหลักสำหรับบันทึกข้อมูล
-    // 🚀 ฟังก์ชันหลักสำหรับบันทึกข้อมูล
     const handleSave = async () => {
-        if (!paletteName.trim()) {
-            alert("กรุณาตั้งชื่อจานสี");
-            return;
-        }
-        if (!colors || colors.length === 0) {
-            alert("ไม่พบข้อมูลสีที่จะบันทึก");
-            return;
-        }
+        if (!paletteName.trim()) return alert("กรุณาตั้งชื่อจานสี");
+        if (!colors || colors.length === 0) return alert("ไม่พบข้อมูลสีที่จะบันทึก");
 
         setSaving(true);
         try {
-            // ==========================================
-            // STEP 1: เตรียมข้อมูลสีทั้งหมด
-            // ==========================================
-            const fullColorPayload = colors.map(c => {
+            const allColorsToSave = [...colors, ...neutralColors];
+
+            const fullColorPayload = allColorsToSave.map(c => {
                 const rawHex = typeof c === 'string' ? c : (c?.hex || '000000');
                 const cleanHex = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
+                let tempHex = cleanHex.replace('#', '');
                 
-                let r = c?.r, g = c?.g, b = c?.b;
-                let h = c?.h, s = c?.s, l = c?.l;
+                const r = parseInt(tempHex.substring(0, 2), 16) || 0;
+                const g = parseInt(tempHex.substring(2, 4), 16) || 0;
+                const b = parseInt(tempHex.substring(4, 6), 16) || 0;
 
-                if (r === undefined || h === undefined) {
-                    let tempHex = cleanHex.replace('#', '');
-                    if(tempHex.length === 3) tempHex = tempHex.split('').map(char => char + char).join('');
-                    
-                    r = parseInt(tempHex.substring(0, 2), 16) || 0;
-                    g = parseInt(tempHex.substring(2, 4), 16) || 0;
-                    b = parseInt(tempHex.substring(4, 6), 16) || 0;
+                let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+                let max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
+                let l = (max + min) / 2;
+                let h = 0, s = 0;
 
-                    let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
-                    let max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
-                    l = (max + min) / 2;
-                    if (max === min) {
-                        h = s = 0;
-                    } else {
-                        let d = max - min;
-                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                        switch (max) {
-                            case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
-                            case gNorm: h = (bNorm - rNorm) / d + 2; break;
-                            case bNorm: h = (rNorm - gNorm) / d + 4; break;
-                            default: h = 0; break;
-                        }
-                        h /= 6;
+                if (max !== min) {
+                    let d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+                        case gNorm: h = (bNorm - rNorm) / d + 2; break;
+                        case bNorm: h = (rNorm - gNorm) / d + 4; break;
+                        default: break;
                     }
-                    h = Math.round(h * 360);
-                    s = Math.round(s * 100);
-                    l = Math.round(l * 100);
+                    h /= 6;
                 }
 
                 return {
                     hex_value: cleanHex,
-                    h_value: h,
-                    s_value: s,
-                    l_value: l,
+                    h_value: Math.round(h * 360),
+                    s_value: Math.round(s * 100),
+                    l_value: Math.round(l * 100),
                     r_value: r,
                     g_value: g,
                     b_value: b
                 };
             });
 
-            // 📍 จุดที่เพิ่มเข้ามา: กรองสีที่ซ้ำกันออก (Deduplicate)
-            // ถ้ามี #FFFFFF 2 อัน จะถูกยุบรวมเหลือแค่อันเดียว เพื่อไม่ให้ Database สับสน
-            const uniqueColorPayload = Object.values(
-                fullColorPayload.reduce((acc, current) => {
-                    acc[current.hex_value] = current;
-                    return acc;
-                }, {})
-            );
+            // 1. ค้นหา source_id และ role_id ทั้งหมด (Dynamic Fetching)
+            let sourceId = 1; 
+            const { data: sourceData } = await supabase.from('sourcetype').select('source_id').ilike('source_name', sourceMode).maybeSingle();
+            if (sourceData) sourceId = sourceData.source_id;
 
-            // ส่งข้อมูลที่กรองแล้วไป Upsert
-            const { data: upsertedColors, error: colorError } = await supabase
-                .from('color')
-                .upsert(uniqueColorPayload, { onConflict: 'hex_value' })
-                .select('color_id, hex_value'); 
+            const { data: roleData, error: roleError } = await supabase.from('role').select('role_id, role_name');
+            if (roleError) throw roleError;
 
+            // 2. 🧠 Smart Mood Analyzer (วิเคราะห์มู้ดใหม่ตามสีปัจจุบันที่บันทึก)
+            let finalMoodId = 1; 
+            const { data: allMoods } = await supabase.from('moodtone').select('*');
+            const { data: allRanges } = await supabase.from('moodtoneRange').select('*');
+
+            if (allMoods && allRanges) {
+                let bestMoodId = 1;
+                let maxMatches = 0;
+                const mainColorsOnly = fullColorPayload.slice(0, colors.length);
+                allMoods.forEach(mood => {
+                    if (mood.mood_id === 1) return; 
+                    const moodRanges = allRanges.filter(r => r.mood_id === mood.mood_id);
+                    if (moodRanges.length === 0) return;
+                    let matchCount = 0;
+                    mainColorsOnly.forEach(color => {
+                        const isMatch = moodRanges.some(r => color.h_value >= r.h_min && color.h_value <= r.h_max && color.s_value >= r.s_min && color.s_value <= r.s_max && color.l_value >= r.l_min && color.l_value <= r.l_max);
+                        if (isMatch) matchCount++;
+                    });
+                    if (matchCount > maxMatches) { maxMatches = matchCount; bestMoodId = mood.mood_id; }
+                });
+                const threshold = Math.ceil(mainColorsOnly.length / 2);
+                if (maxMatches >= threshold) { finalMoodId = bestMoodId; }
+            }
+
+            // 3. บันทึกสีลงตาราง 'color' (ป้องกันซ้ำ)
+            const uniqueColorPayload = Object.values(fullColorPayload.reduce((acc, current) => { acc[current.hex_value] = current; return acc; }, {}));
+            const { data: upsertedColors, error: colorError } = await supabase.from('color').upsert(uniqueColorPayload, { onConflict: 'hex_value' }).select('color_id, hex_value'); 
             if (colorError) throw colorError;
 
             // ==========================================
-            // STEP 2: บันทึกข้อมูลลงตาราง 'palette'
+            // 🚀 ส่วนที่แก้ไข: จัดการโหมด INSERT หรือ UPDATE
             // ==========================================
-            const { data: newPalette, error: paletteError } = await supabase
-                .from('palette')
-                .insert([{
-                    palette_name: paletteName,
-                    user_id: userId,
-                    collection_id: selectedCollection,
-                    source_id: sourceId,
-                    mood_id: moodId
-                }])
-                .select('palette_id')
-                .single();
+            let paletteIdToUse;
 
-            if (paletteError) throw paletteError;
+            if (isUpdateMode && paletteToEdit) {
+                // 📍 โหมดอัปเดต: UPDATE ลงตาราง 'palette'
+                paletteIdToUse = paletteToEdit.palette_id;
+                const { error: updatePaletteError } = await supabase
+                    .from('palette')
+                    .update({
+                        palette_name: paletteName.trim(),
+                        collection_id: selectedCollection,
+                        mood_id: finalMoodId // อัปเดตมู้ดใหม่
+                        // user_id และ source_id ไม่ควรเปลี่ยน
+                    })
+                    .eq('palette_id', paletteIdToUse);
 
-            // ==========================================
-            // STEP 3: ประกอบร่างข้อมูลและบันทึกลง 'paletteDetail'
-            // ==========================================
-            // ตรงนี้เรายังใช้ตัวแปร `colors` ตัวเดิม เพื่อให้บันทึกครบทุกช่อง (แม้สีจะซ้ำกัน)
-            const detailPayload = colors.map((c, index) => {
+                if (updatePaletteError) throw updatePaletteError;
+
+                // 📍 โหมดอัปเดต: ลบ paletteDetail เดิมทิ้งก่อน แล้วค่อย INSERT ใหม่ (เพื่อรองรับการเพิ่ม/ลดช่องสี)
+                const { error: deleteDetailsError } = await supabase
+                    .from('paletteDetail')
+                    .delete()
+                    .eq('palette_id', paletteIdToUse);
+                
+                if (deleteDetailsError) throw deleteDetailsError;
+
+            } else {
+                // 📍 โหมดสร้างใหม่: INSERT ลงตาราง 'palette' (โค้ดเดิม)
+                const { data: newPalette, error: paletteError } = await supabase
+                    .from('palette')
+                    .insert([{
+                        palette_name: paletteName.trim(),
+                        user_id: userId,
+                        collection_id: selectedCollection,
+                        source_id: sourceId,
+                        mood_id: finalMoodId 
+                    }])
+                    .select('palette_id')
+                    .single();
+
+                if (paletteError) throw paletteError;
+                paletteIdToUse = newPalette.palette_id;
+            }
+
+            // 4. บันทึกรายการสีลง 'paletteDetail' (กำหนด Role แบบ Dynamic) -> ใช้ paletteIdToUse ตัวเดียวกัน
+            const detailPayload = allColorsToSave.map((c, index) => {
                 const rawHex = typeof c === 'string' ? c : (c?.hex || '000000');
                 const cleanHex = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
-
-                // ดึง color_id จากตาราง color กลับมาจับคู่
                 const matchedColor = upsertedColors.find(uc => uc.hex_value === cleanHex);
 
-                let prop = 0;
-                let rId = (typeof c === 'object' && c.roleId) ? c.roleId : 1;
-                
-                if (rId === 1) prop = 30;      
-                else if (rId === 2) prop = 10; 
-                else if (rId === 3) prop = 54; 
-                else if (rId === 4) prop = 6;  
+                let roleNameTarget = 'Secondary'; 
+                let proportion = 5;
+
+                if (index === 0) {
+                    roleNameTarget = 'Primary'; proportion = 60;
+                } else if (index > 0 && index < colors.length) {
+                    roleNameTarget = 'Secondary';
+                    if (index === 1) proportion = 20; else if (index === 2) proportion = 10; else if (index === 3) proportion = 5; else proportion = 5;
+                } else {
+                    roleNameTarget = 'Neutral'; proportion = 0; 
+                }
+
+                const matchedRole = roleData?.find(r => r.role_name.toLowerCase() === roleNameTarget.toLowerCase());
+                const roleIdToSave = matchedRole ? matchedRole.role_id : 2; 
 
                 return {
-                    palette_id: newPalette.palette_id,
+                    palette_id: paletteIdToUse, // 📍 ใช้ ID ที่ถูกต้อง
                     color_id: matchedColor?.color_id,
-                    order_index: index + 1,
-                    role_id: rId,
-                    custom_propprtion: prop
+                    order_index: index + 1,       
+                    role_id: roleIdToSave, 
+                    custom_propprtion: proportion
                 };
             });
 
-            const { error: detailError } = await supabase
-                .from('paletteDetail')
-                .insert(detailPayload);
-
+            const { error: detailError } = await supabase.from('paletteDetail').insert(detailPayload);
             if (detailError) throw detailError;
 
-            alert(`บันทึกจานสี "${paletteName}" สำเร็จ!`);
+            // ==========================================
+            // 🎉 ส่วนที่แก้ไข: สำเร็จและเรียก callback
+            // ==========================================
+            const actionText = isUpdateMode ? 'อัปเดต' : 'บันทึก';
+            alert(`${actionText}จานสี "${paletteName}" สำเร็จ!`);
+            
+            if (isUpdateMode && onUpdateSuccess) {
+                // เรียก callback เพื่อให้ Parent รู้ว่าข้อมูลเปลี่ยนแล้ว (เช่น เพื่อโหลดข้อมูลใหม่ใน MyPalette)
+                onUpdateSuccess();
+            }
             onClose();
 
         } catch (error) {
-            console.error("Error saving palette transaction:", error.message);
-            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
+            console.error("Error saving/updating palette transaction:", error);
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + error.message);
         } finally {
             setSaving(false);
         }
@@ -206,23 +251,15 @@ const SavePalette = ({
     return (
         <div className="save-modal-overlay" onClick={handleOverlayClick}>
             <div className="save-modal-content">
-                <h2 className="save-modal-title">Save Palette</h2>
+                {/* 📍 เปลี่ยนหัวข้อตามโหมด */}
+                <h2 className="save-modal-title">{isUpdateMode ? 'Update Palette' : 'Save Palette'}</h2>
 
-                {/* แถบพรีวิวสี */}
                 <div className="color-preview-container">
                     <div className="color-preview-bar">
                         {colors && colors.map((c, index) => {
-                            // 📍 เช็คแบบปลอดภัย: ถ้าเป็น String ใช้ c ได้เลย ถ้าเป็น Object ให้ดึง c.hex
                             const hexValue = typeof c === 'string' ? c : c?.hex || '';
                             const bgColor = hexValue.startsWith('#') ? hexValue : `#${hexValue}`;
-
-                            return (
-                                <div
-                                    key={index}
-                                    className="color-preview-block"
-                                    style={{ backgroundColor: bgColor }}
-                                />
-                            );
+                            return <div key={index} className="color-preview-block" style={{ backgroundColor: bgColor }} />;
                         })}
                     </div>
                 </div>
@@ -249,12 +286,9 @@ const SavePalette = ({
                                 className={`collection-bar-save ${selectedCollection === col.collection_id ? 'selected' : ''}`}
                                 onClick={() => handleToggleCollection(col.collection_id)}
                             >
-                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <Folder size={20} color={selectedCollection === col.collection_id ? "#000" : "#fff"} />
-                                    <span style={{ 
-                                        color: selectedCollection === col.collection_id ? "#000" : "#fff",
-                                        fontWeight: 500
-                                    }}>
+                                    <span style={{ color: selectedCollection === col.collection_id ? "#000" : "#fff", fontWeight: 500 }}>
                                         {col.collection_name}
                                     </span>
                                 </div>
@@ -265,11 +299,10 @@ const SavePalette = ({
                 </div>
 
                 <div className="save-modal-actions">
-                    <button className="btn-cancel" onClick={onClose} disabled={saving}>
-                        Cancel
-                    </button>
+                    <button className="btn-cancel" onClick={onClose} disabled={saving}>Cancel</button>
+                    {/* 📍 เปลี่ยนข้อความปุ่มกดบันทึก */}
                     <button className="btn-save-new" onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save New Palette'}
+                        {saving ? 'Saving...' : (isUpdateMode ? 'Update Palette' : 'Save New Palette')}
                     </button>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 // ไฟล์: src/frontend/Navbar.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Eye, Moon, User, Palette, ChevronDown } from 'lucide-react';
+import { Moon, User, Palette, ChevronDown } from 'lucide-react';
 import './Navbar.css';
 import { supabase } from '../backend/supabaseClient';
 import MyPalette from './MyPalette'; // 📍 นำเข้า Component MyPalette ที่คุณสร้างไว้
@@ -110,11 +110,6 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                 </div>
 
                 <div className="navbar-right">
-                    <button className="vision-btn">
-                        <Eye size={18} />
-                        <span className="vision-text">Normal Vision</span>
-                    </button>
-
                     <button className="icon-btn">
                         <Moon size={20} fill="currentColor" />
                     </button>

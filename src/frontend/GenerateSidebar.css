@@ -699,3 +699,57 @@ input[type=range].slider::-moz-range-thumb {
         transform: translate(-50%, 0);
     }
 }
+/* ส่วนหัวเมื่ออยู่ในโหมดแก้ไขจานสี (Edit Mode Header) */
+.edit-mode-header {
+    padding: 16px 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.edit-mode-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-mode-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.edit-mode-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.exit-edit-btn {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.exit-edit-btn:hover {
+    background: #e5e7eb;
+}
+
+/* ปรับปรุงพื้นที่ว่าง (Empty Slot) ใน Secondary */
+.dashed-add-slot {
+    /* ... โค้ดเดิมที่มีอยู่ ... */
+    transition: all 0.2s;
+}
+
+.dashed-add-slot:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}

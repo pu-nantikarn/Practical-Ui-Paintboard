@@ -7,7 +7,7 @@ import { ColorContext } from '../contexts/ColorContext';
 // นำเข้า CSS และ Component Modal
 import './GenerateSidebar.css';
 import './ImageSidebar.css';
-import SavePaletteModal from '../frontend/SavePalette';
+import SavePalette from '../frontend/SavePalette';
 import { supabase } from '../backend/supabaseClient';
 
 
@@ -18,16 +18,8 @@ const extractColorsFromImage = (imageElement, threshold) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    // ลดขนาดรูปลงมาเพื่อความเร็วในการคำนวณ
-    const MAX_SIZE = 400;
-    let width = imageElement.naturalWidth || imageElement.width;
-    let height = imageElement.naturalHeight || imageElement.height;
-
-    if (width > MAX_SIZE || height > MAX_SIZE) {
-        const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
-        width = Math.floor(width * ratio);
-        height = Math.floor(height * ratio);
-    }
+    const width = imageElement.naturalWidth || imageElement.width;
+    const height = imageElement.naturalHeight || imageElement.height;
 
     canvas.width = width;
     canvas.height = height;
@@ -177,32 +169,32 @@ const generateShades = (baseHex) => {
 const generateNeutralShades = (primaryHex) => {
     const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
     const { r, g, b } = hexToRgb(baseColor);
-    const baseHsl = rgbToHsl(r, g, b); 
-    
-    const tintSaturation = baseHsl.s === 0 ? 0 : 4; 
+    const baseHsl = rgbToHsl(r, g, b);
+
+    const tintSaturation = baseHsl.s === 0 ? 0 : 4;
 
     // 📍 1. ปรับจุดเริ่มต้นให้อ่อน (สว่าง) กว่าเดิม
     const maxLightness = 98; // ปรับจาก 97 เป็น 99 เพื่อให้ช่องแรกสว่างเกือบสุด
     const minLightness = 5;  // ช่องสุดท้ายยังคงมืดลึกๆ ไว้
 
     const shades = [];
-    
+
     for (let i = 0; i <= 10; i++) {
         // หาอัตราส่วนการเดินทาง (จาก 0 ถึง 1)
-        let progress = i / 10; 
-        
+        let progress = i / 10;
+
         // 📍 2. โค้ดพระเอก: ใช้สมการยกกำลัง (Curve) เพื่อดัดเส้นตรงให้โค้ง
         // เลข 1.3 คือ "ความหน่วง" (ลองปรับได้ตั้งแต่ 1.2 - 1.5)
         // ยิ่งเลขเยอะ สีช่วงแรกจะยิ่งอ่อนและสว่างนานขึ้น
-        let easedProgress = Math.pow(progress, 1.3); 
-        
+        let easedProgress = Math.pow(progress, 1.3);
+
         // คำนวณความสว่างโดยใช้ค่าที่ถูกดัดให้โค้งแล้ว
-        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness)); 
-        
+        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness));
+
         const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
         shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
     }
-    
+
     return shades;
 };
 
@@ -336,7 +328,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Image Sidebar)
 // ==========================================
-const ImageSidebar = () => {
+const ImageSidebar = ({ paletteToEdit, onExitEditingMode }) => {
     const imgRef = useRef(null);
 
     const [uploadedImage, setUploadedImage] = useState(() => {
@@ -348,6 +340,54 @@ const ImageSidebar = () => {
 
     const [openPopover, setOpenPopover] = useState({ type: null, id: null });
     const neutralShades = generateNeutralShades(primary.value);
+
+    const isEditingSavedPalette = paletteToEdit !== null;
+
+    // 📍 1. สร้าง State สำหรับรับสี Neutral เก่าจาก DB
+    const [loadedNeutralShades, setLoadedNeutralShades] = useState([]);
+
+    // โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
+    useEffect(() => {
+        if (paletteToEdit) {
+            const details = paletteToEdit.paletteDetail || [];
+
+            // 📍 แยกสีหลัก (Primary & Secondary ไม่เกิน 6 สี)
+            const mainColors = details
+                .filter(d => String(d.role_id) !== '3')
+                .sort((a, b) => a.order_index - b.order_index)
+                .slice(0, 6);
+
+            // 📍 แยกสี Neutral (Role 3 หรือ สีที่เกินมาจาก 6 อันแรก)
+            const dbNeutralColors = details
+                .filter(d => String(d.role_id) === '3' || d.order_index > 6)
+                .sort((a, b) => a.order_index - b.order_index);
+
+            if (mainColors.length > 0) {
+                const primaryHex = mainColors[0].color?.hex_value?.replace('#', '') || 'FFFFFF';
+                setPrimary({ id: 'primary', value: primaryHex, isLocked: false });
+
+                const newSecondary = mainColors.slice(1, 6).map((detail, index) => ({
+                    id: `sec-${Date.now()}-${index}`,
+                    value: detail.color?.hex_value?.replace('#', '') || 'CCCCCC',
+                    isLocked: false
+                }));
+                setSecondary(newSecondary);
+            }
+
+            // 📍 เอาสี Neutral เก่ามาเก็บไว้ใน State
+            if (dbNeutralColors.length > 0) {
+                setLoadedNeutralShades(dbNeutralColors.map(d => d.color?.hex_value?.replace('#', '') || 'CCCCCC'));
+            } else {
+                setLoadedNeutralShades([]);
+            }
+        } else {
+            setLoadedNeutralShades([]); // ล้างค่าเมื่อออกจากโหมด Edit
+        }
+    }, [paletteToEdit, setPrimary, setSecondary]);
+
+    // 📍 2. ตัดสินใจว่าจะใช้สี Neutral จาก DB หรือ Generate ใหม่
+    const autoNeutralShades = generateNeutralShades(primary.value);
+    const displayNeutralShades = loadedNeutralShades.length > 0 ? loadedNeutralShades : autoNeutralShades;
 
     // 📍 2. เพิ่ม State สำหรับเก็บสีทั้งหมดที่ดูดได้ และไว้เปิด/ปิดหน้าต่างย่อย
     const [allExtractedColors, setAllExtractedColors] = useState([]);
@@ -389,6 +429,68 @@ const ImageSidebar = () => {
         }
     }, [uploadedImage]);
 
+    // 1. ฟังก์ชันเมื่อเริ่มลากสีจากแผง .all-colors-panel
+    const handleDragStart = (e, colorHex) => {
+        // ตั้งค่าข้อมูลที่จะส่งไป เป็นรหัสสี HEX
+        e.dataTransfer.setData("text/plain", colorHex);
+        e.dataTransfer.effectAllowed = "copy"; // แสดง Icon ก๊อปปี้ตอนลาก
+    };
+
+    // 2. ฟังก์ชันอนุญาตให้วางสีลงในช่อง (จำเป็นต้องมีเพื่อให้ onDrop ทำงาน)
+    const handleDragOver = (e) => {
+        e.preventDefault(); // อนุญาตให้วาง
+        e.dataTransfer.dropEffect = "copy"; // แสดง Icon ก๊อปปี้
+    };
+
+    // 3. ฟังก์ชันจัดการเมื่อวางสีลงในช่อง Primary
+    const handleDropPrimary = (e) => {
+        e.preventDefault();
+        if (primary.isLocked) return;
+
+        const droppedColor = e.dataTransfer.getData("text/plain");
+        if (droppedColor) {
+            // 📍 ตัด # ออก (ถ้ามีติดมา) แล้วกรองเอาเฉพาะรหัสสี HEX
+            const cleanColor = droppedColor.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6).toUpperCase();
+            if (cleanColor) {
+                setPrimary({ ...primary, value: cleanColor });
+            }
+        }
+    };
+
+    // 4. ฟังก์ชันจัดการเมื่อวางสีลงในช่อง Secondary ที่มีอยู่แล้ว
+    const handleDropSecondary = (e, slotId) => {
+        e.preventDefault();
+
+        const slot = secondary.find(s => s.id === slotId);
+        if (!slot || slot.isLocked) return;
+
+        const droppedColor = e.dataTransfer.getData("text/plain");
+        if (droppedColor) {
+            // 📍 ตัด # ออก (ถ้ามีติดมา)
+            const cleanColor = droppedColor.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6).toUpperCase();
+            if (cleanColor) {
+                setSecondary(prev =>
+                    prev.map(s => s.id === slotId ? { ...s, value: cleanColor } : s)
+                );
+            }
+        }
+    };
+
+    // 5. 📍 ฟังก์ชันใหม่: จัดการเมื่อวางสีลงใน "ช่องว่าง (กล่องประ)"
+    const handleDropNewSecondary = (e) => {
+        e.preventDefault();
+        if (secondary.length >= 5) return; // ถ้าช่องเต็ม 5 แล้วให้ข้ามไป
+
+        const droppedColor = e.dataTransfer.getData("text/plain");
+        if (droppedColor) {
+            const cleanColor = droppedColor.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6).toUpperCase();
+            if (cleanColor) {
+                // สร้างช่องใหม่ พร้อมกับใส่สีที่ลากมาลงไปเลย
+                setSecondary(prev => [...prev, { id: Date.now(), value: cleanColor, isLocked: false }]);
+            }
+        }
+    };
+
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
@@ -407,67 +509,65 @@ const ImageSidebar = () => {
         return shuffled;
     };
 
+    // 📍 ฟังก์ชันที่ 1: การสลับสี
     const handleShuffleColors = () => {
         // ถ้ายังไม่ได้ดูดสี หรือไม่มีสีที่ดึงได้ ให้ข้ามไป
         if (allExtractedColors.length === 0) return;
 
         // สุ่มลำดับสีที่ดึงได้ทั้งหมดใหม่
         const randomColors = shuffleArray(allExtractedColors);
-        let colorIndex = 0; // ตัวนับว่าใช้สีไปแล้วกี่สี
+        let colorIndex = 0;
 
-        // 1. อัปเดตสีในช่อง Primary (ถ้าไม่ได้ล็อก)
-        setPrimary(prev => {
-            if (prev.isLocked || colorIndex >= randomColors.length) return prev;
-            const nextColor = randomColors[colorIndex++];
-            return { ...prev, value: nextColor };
+        // 1. คำนวณสีของ Primary ก่อน
+        let newPrimaryValue = primary.value;
+        if (!primary.isLocked) {
+            // ใช้ % เพื่อวนลูปสีกลับมาใหม่ถ้าสีหมด
+            newPrimaryValue = randomColors[colorIndex % randomColors.length];
+            colorIndex++;
+        }
+
+        // 2. คำนวณสีของ Secondary
+        const newSecondary = secondary.map(slot => {
+            if (slot.isLocked) return slot;
+            const nextColor = randomColors[colorIndex % randomColors.length];
+            colorIndex++;
+            return { ...slot, value: nextColor };
         });
 
-        // 2. อัปเดตสีในช่อง Secondary (เฉพาะช่องที่ไม่ได้ล็อก)
-        setSecondary(prev => {
-            return prev.map(slot => {
-                if (slot.isLocked || colorIndex >= randomColors.length) {
-                    return slot;
-                }
-                const nextColor = randomColors[colorIndex++];
-                return { ...slot, value: nextColor };
-            });
-        });
+        // 3. อัปเดต State ทีเดียวจบ (แก้ปัญหา Strict Mode รันซ้ำ)
+        setPrimary({ ...primary, value: newPrimaryValue });
+        setSecondary(newSecondary);
     };
 
-    // 📍 3. ฟังก์ชันดึงสีจากรูป จะถูกเรียกเมื่อรูปโหลดเสร็จ (เรียกใช้อัลกอริทึม Clustering)
+    // 📍 ฟังก์ชันที่ 2: ดึงสีจากรูป จะถูกเรียกเมื่อรูปโหลดเสร็จ
     const handleImageLoad = () => {
         try {
-            // ดึงสีทั้งหมดด้วยอัลกอริทึมของเรา (Threshold = 20.0)
             const hexColors = extractColorsFromImage(imgRef.current, 20.0);
-
-            // เก็บสีทั้งหมดไว้ใน State
             setAllExtractedColors(hexColors);
 
             if (hexColors.length === 0) return;
 
-            // 📍 1. สุ่มสีที่ดึงมาทั้งหมดให้กระจายกัน
             const randomColors = shuffleArray(hexColors);
-            let colorIndex = 0; // ตัวนับว่าใช้สีไปแล้วกี่สี
+            let colorIndex = 0;
 
-            // 📍 2. เอาสีที่สุ่มได้มาใส่ Primary (ถ้าไม่ได้ล็อก)
-            setPrimary(prev => {
-                if (prev.isLocked || colorIndex >= randomColors.length) return prev;
-                const nextColor = randomColors[colorIndex++];
-                return { ...prev, value: nextColor };
+            // 1. คำนวณสีของ Primary 
+            let newPrimaryValue = primary.value;
+            if (!primary.isLocked) {
+                newPrimaryValue = randomColors[colorIndex % randomColors.length];
+                colorIndex++;
+            }
+
+            // 2. คำนวณสีของ Secondary
+            const newSecondary = secondary.map(slot => {
+                if (slot.isLocked) return slot;
+                const nextColor = randomColors[colorIndex % randomColors.length];
+                colorIndex++;
+                return { ...slot, value: nextColor };
             });
 
-            // 📍 3. เอาสีที่เหลือมาใส่ Secondary (ตามจำนวน Slot ที่มีอยู่ และถ้าไม่ได้ล็อก)
-            setSecondary(prev => {
-                return prev.map(slot => {
-                    // ถ้าช่องนี้โดนล็อก หรือ สีที่สุ่มหมดแล้ว ให้ข้ามไป
-                    if (slot.isLocked || colorIndex >= randomColors.length) {
-                        return slot;
-                    }
-                    // ถ้ายังไม่ล็อก ให้เอาสีที่สุ่มลำดับถัดไปมาใส่
-                    const nextColor = randomColors[colorIndex++];
-                    return { ...slot, value: nextColor };
-                });
-            });
+            // 3. อัปเดต State ทีเดียวจบ
+            setPrimary({ ...primary, value: newPrimaryValue });
+            setSecondary(newSecondary);
 
         } catch (error) {
             console.log("ไม่สามารถดึงสีได้จากรูปนี้", error);
@@ -512,6 +612,18 @@ const ImageSidebar = () => {
 
     return (
         <aside className="sidebar-container image-mode-sidebar" style={{ position: 'relative' }}>
+            {/* 📍 เพิ่ม UI ส่วนหัวเมื่ออยู่ในโหมดแก้ไขจานสี */}
+            {isEditingSavedPalette && (
+                <div className="edit-mode-header">
+                    <div className="edit-mode-info">
+                        <span className="edit-mode-label">Editing Palette</span>
+                        <span className="edit-mode-name">{paletteToEdit.palette_name}</span>
+                    </div>
+                    <button className="exit-edit-btn" onClick={onExitEditingMode}>
+                        Create New
+                    </button>
+                </div>
+            )}
 
             {/* --- Import Image Section --- */}
             <div className="sidebar-section import-section">
@@ -548,7 +660,11 @@ const ImageSidebar = () => {
                 {/* Primary Color */}
                 <div className="color-group">
                     <label className="section-title">Primary Colors</label>
-                    <div className="input-wrapper">
+                    <div
+                        className="input-wrapper"
+                        onDragOver={handleDragOver} // อนุญาตให้วาง
+                        onDrop={handleDropPrimary}  // จัดการเมื่อวาง
+                    >
                         <button className="color-circle-btn" style={{ backgroundColor: `#${primary.value || 'FFF'}` }} onClick={() => togglePopover('picker', 'primary')} />
                         <span className="hex-prefix">#</span>
                         <input type="text" value={primary.value} onChange={(e) => handleInputHex(e.target.value, (val) => setPrimary({ ...primary, value: val }))} readOnly={primary.isLocked} className={primary.isLocked ? 'locked-input' : ''} />
@@ -567,7 +683,12 @@ const ImageSidebar = () => {
                     <label className="section-title">Secondary/ Accent Colors</label>
                     <div className="secondary-slots">
                         {secondary.map((slot) => (
-                            <div key={slot.id} className="input-wrapper">
+                            <div
+                                key={slot.id}
+                                className="input-wrapper"
+                                onDragOver={handleDragOver} // อนุญาตให้วาง
+                                onDrop={(e) => handleDropSecondary(e, slot.id)} // จัดการเมื่อวาง (ส่ง ID ไปด้วย)
+                            >
                                 <button className="color-circle-btn" style={{ backgroundColor: `#${slot.value || 'FFF'}` }} onClick={() => togglePopover('picker', slot.id)} />
                                 <span className="hex-prefix">#</span>
                                 <input type="text" value={slot.value} onChange={(e) => handleInputHex(e.target.value, (val) => updateColorValue(slot.id, val))} readOnly={slot.isLocked} className={slot.isLocked ? 'locked-input' : ''} />
@@ -581,7 +702,18 @@ const ImageSidebar = () => {
                                 {openPopover.type === 'gradient' && openPopover.id === slot.id && <FloatingGradient baseHex={slot.value} onCopy={handleCopy} />}
                             </div>
                         ))}
-                        {[...Array(5 - secondary.length)].map((_, index) => <div key={`empty-${index}`} className="dashed-add-slot" onClick={handleAddSecondary}><Plus size={20} className="plus-icon" /></div>)}
+                        {[...Array(Math.max(0, 5 - secondary.length))].map((_, index) => (
+                            <div
+                                key={`empty-${index}`}
+                                className="dashed-add-slot"
+                                onClick={handleAddSecondary}
+                                onDragOver={handleDragOver}
+                                onDrop={handleDropNewSecondary}
+                                title="Click to add or drop color here"
+                            >
+                                <Plus size={20} className="plus-icon" />
+                            </div>
+                        ))}
                     </div>
                     {/* 📍 3. เพิ่มปุ่ม Shuffle สี ตรงด้านล่าง Secondary Slots นี้ */}
                     {allExtractedColors.length > 0 && (
@@ -601,8 +733,15 @@ const ImageSidebar = () => {
                 <div className="color-group neutral-group">
                     <label className="section-title">Neutral Colors</label>
                     <div className="shades-grid neutral-grid">
-                        {neutralShades.map((shade, index) => (
-                            <div key={index} className="shade-cell" style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }} onClick={(e) => handleCopy(e, shade)} title={`Click to copy: #${shade}`}>
+                        {/* 📍 เปลี่ยนมาใช้ displayNeutralShades ตรงนี้ */}
+                        {displayNeutralShades.map((shade, index) => (
+                            <div
+                                key={index}
+                                className="shade-cell"
+                                style={{ backgroundColor: `#${shade}`, cursor: 'pointer' }}
+                                onClick={(e) => handleCopy(e, shade)}
+                                title={`Click to copy: #${shade}`}
+                            >
                                 <span className="shade-text always-visible" style={{ color: getContrastColor(shade) }}>#{shade}</span>
                             </div>
                         ))}
@@ -629,8 +768,11 @@ const ImageSidebar = () => {
                             <div
                                 key={index}
                                 className="all-color-item"
-                                onClick={(e) => handleCopy(e, hex)}
-                                title={`Click to copy #${hex}`}
+                                style={{ cursor: 'grab' }} // เปลี่ยน cursor ให้รู้ว่าลากได้
+                                draggable={true} // 📍 ทำให้ลากได้
+                                onDragStart={(e) => handleDragStart(e, hex)} // 📍 ใช้ตัวแปร hex ส่งไปเวลาลาก
+                                onClick={(e) => handleCopy(e, hex)} // คืนค่า onClick สำหรับ Copy สีเอาไว้
+                                title={`Click to copy #${hex} / Drag to slot`}
                             >
                                 <div className="color-swatch" style={{ backgroundColor: `#${hex}` }}></div>
                                 <span>#{hex}</span>
@@ -640,7 +782,17 @@ const ImageSidebar = () => {
                 </div>
             )}
 
-            <SavePaletteModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} colors={currentColors} userId={userId} />
+            <SavePalette
+                isOpen={isSaveModalOpen}
+                onClose={() => setIsSaveModalOpen(false)}
+                colors={currentColors}
+                neutralColors={neutralShades}
+                userId={userId}
+                sourceMode="Image"         // 📍 บอกว่ามาจากโหมด Image
+                activeMood="Random"        // 📍 โหมดรูปภาพจะถือว่าเป็นสีผสม (Random/Mix)
+                paletteToEdit={paletteToEdit}
+                isUpdateMode={isEditingSavedPalette}
+            />
             {/* 📍 UI สำหรับแสดงผล Copied Feedback */}
             {copyFeedback && (
                 <div className="copy-feedback-toast">

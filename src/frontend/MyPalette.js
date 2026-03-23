@@ -1,14 +1,14 @@
 // ไฟล์: src/frontend/MyPalette.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Folder, ChevronDown, Layers, Palette,
     X, Trash2,
-    Plus, Check, ArrowUpRight, Grip
+    Plus, Check, Grip
 } from 'lucide-react';
 import { supabase } from '../backend/supabaseClient';
 import './MyPalette.css';
 
-const MyPalette = ({ isOpen, onClose, userId }) => {
+const MyPalette = ({ isOpen, onClose, userId, onSelectPalette }) => {
     const [loading, setLoading] = useState(true);
     const [collections, setCollections] = useState([]);
     const [groupedPalettes, setGroupedPalettes] = useState({});
@@ -16,6 +16,10 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
     const [newCollectionName, setNewCollectionName] = useState('');
     const [isSavingCollection, setIsSavingCollection] = useState(false);
     const [expandedCols, setExpandedCols] = useState({});
+
+    // 📍 ประกาศตัวแปรเก็บตำแหน่งการลาก
+    const dragItem = useRef(null);
+    const dragOverItem = useRef(null);
 
     const toggleCollection = (colId) => {
         setExpandedCols(prev => ({
@@ -166,19 +170,95 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
         }
     };
 
-    // --- 🚀 ส่วนที่ปรับปรุงใหม่: แยกการเรนเดอร์เนื้อหาออกมาเพื่อลดความซับซ้อน ---
-    const renderContent = () => {
-        if (loading) {
-            return <div className="loading-state">Loading your collections...</div>;
+    // 📍 1. ฟังก์ชันเริ่มลาก (เพิ่มการส่งข้อมูล palette ตัวที่ถูกลากเข้ามาด้วย)
+    const handleDragStart = (index, collectionKey, palette) => {
+        dragItem.current = { index, collectionKey, palette };
+    };
+
+    // 📍 2. ฟังก์ชันเมื่อลากไปทับ
+    const handleDragEnter = (index, collectionKey) => {
+        dragOverItem.current = { index, collectionKey };
+    };
+
+    // 📍 3. ฟังก์ชันเมื่อปล่อยเมาส์ (ย้ายข้ามหมวดหมู่ และบันทึกลง Database)
+    const handleDragEnd = async () => {
+        if (!dragItem.current || !dragOverItem.current) return;
+
+        const { index: sourceIndex, collectionKey: sourceCol, palette } = dragItem.current;
+        const { index: destIndex, collectionKey: destCol } = dragOverItem.current;
+
+        // ถ้าลากปล่อยที่เดิมเป๊ะๆ ไม่ต้องทำอะไร
+        if (sourceCol === destCol && sourceIndex === destIndex) {
+            dragItem.current = null;
+            dragOverItem.current = null;
+            return;
         }
 
-        // 📍 1. ดึงข้อมูล Uncategorized ออกมาใส่ตัวแปรก่อนให้ชัดเจน
+        // ==========================================
+        // 🔄 กรณีลากข้ามคอลเลกชัน (Cross-Collection)
+        // ==========================================
+        if (sourceCol !== destCol) {
+            // 1. อัปเดตหน้าจอทันที (Optimistic UI) ให้ดูสมูท
+            setGroupedPalettes(prev => {
+                const newGrouped = { ...prev };
+                const sourceList = [...(newGrouped[sourceCol] || [])];
+                const destList = [...(newGrouped[destCol] || [])];
+
+                const [draggedItem] = sourceList.splice(sourceIndex, 1);
+                draggedItem.collection_id = destCol === 'uncategorized' ? null : destCol; // อัปเดต id ชั่วคราวบนหน้าจอ
+                destList.splice(destIndex, 0, draggedItem);
+
+                newGrouped[sourceCol] = sourceList;
+                newGrouped[destCol] = destList;
+                return newGrouped;
+            });
+
+            // 2. อัปเดตฐานข้อมูล (Supabase)
+            try {
+                const newCollectionId = destCol === 'uncategorized' ? null : destCol;
+                const { error } = await supabase
+                    .from('palette')
+                    .update({ collection_id: newCollectionId })
+                    .eq('palette_id', palette.palette_id);
+
+                if (error) throw error;
+            } catch (error) {
+                console.error("Error updating collection:", error);
+                alert("เกิดข้อผิดพลาดในการย้ายคอลเลกชัน");
+                fetchData(); // ถ้าย้ายไม่สำเร็จ ให้โหลดข้อมูลเดิมกลับมา
+            }
+        }
+        // ==========================================
+        // ↕️ กรณีสลับตำแหน่งในคอลเลกชันเดิม (Same-Collection)
+        // ==========================================
+        else if (sourceCol === destCol && sourceIndex !== destIndex) {
+            setGroupedPalettes(prev => {
+                const newGrouped = { ...prev };
+                const list = [...newGrouped[sourceCol]];
+                const [draggedItem] = list.splice(sourceIndex, 1);
+                list.splice(destIndex, 0, draggedItem);
+                newGrouped[sourceCol] = list;
+                return newGrouped;
+            });
+        }
+
+        // รีเซ็ตค่าหลังจากปล่อยเมาส์
+        dragItem.current = null;
+        dragOverItem.current = null;
+    };
+
+    // --- 🚀 ส่วนที่ปรับปรุงใหม่: แยกการเรนเดอร์เนื้อหาออกมาเพื่อลดความซับซ้อน ---
+    const renderContent = () => {
+        if (loading) return <div className="loading-state">Loading your collections...</div>;
+
         const uncategorizedPalettes = groupedPalettes['uncategorized'] || [];
         const hasUncategorized = uncategorizedPalettes.length > 0;
         const isUncategorizedExpanded = expandedCols['uncategorized'] === true;
 
-        // ถ้าไม่มีทั้งคอลเลกชัน และไม่มีจานสีที่ไม่ได้จัดหมวดหมู่เลย = ว่างเปล่า
         const isEmpty = collections.length === 0 && !hasUncategorized;
+
+        // 📍 แสดง Uncategorized เสมอ ถ้ามีคอลเลกชันอยู่ เพื่อให้ลากของออกจากโฟลเดอร์มาทิ้งไว้ได้
+        const showUncategorized = hasUncategorized || collections.length > 0;
 
         if (isEmpty) {
             return (
@@ -204,20 +284,15 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
                             <div
                                 className="collection-bar"
                                 onClick={() => toggleCollection(col.collection_id)}
-                                style={{
-                                    cursor: 'pointer',
-                                    backgroundColor: '#a3a3a3',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
+                                onDragOver={(e) => e.preventDefault()} // 📍 ยอมรับการ Drop ลงบนหัวข้อโฟลเดอร์
+                                onDragEnter={() => handleDragEnter(palettesInCol.length, col.collection_id)} // 📍 ให้ไปต่อท้ายสุดของโฟลเดอร์นี้
+                                style={{ cursor: 'pointer', backgroundColor: '#a3a3a3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                             >
                                 <div className="collection-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Folder size={20} /> {col.collection_name}
+                                    <Folder size={20} /> {col.collection_name} ({palettesInCol.length})
                                 </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    {/* 📍 ปุ่มถังขยะสำหรับลบ Collection */}
                                     <button
                                         className="col-delete-btn"
                                         onClick={(e) => handleDeleteCollection(e, col.collection_id, col.collection_name)}
@@ -233,15 +308,27 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
                             {isExpanded && (
                                 <div className="palette-grid" style={{ marginTop: '12px' }}>
                                     {palettesInCol.length > 0 ? (
-                                        palettesInCol.map(palette => (
+                                        palettesInCol.map((palette, index) => (
                                             <PaletteCard
                                                 key={palette.palette_id}
                                                 palette={palette}
-                                                onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)} // 📍 เพิ่มตรงนี้
+                                                onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)}
+                                                onDragStart={() => handleDragStart(index, col.collection_id, palette)}
+                                                onDragEnter={() => handleDragEnter(index, col.collection_id)}
+                                                onDragEnd={handleDragEnd}
+                                                // ====== 📍 ส่วนที่เพิ่มเข้ามาใหม่ ======
+                                                onSelectPalette={onSelectPalette} // Props ส่งต่อฟังก์ชันมาจาก Parent
+                                            // ===================================
                                             />
                                         ))
                                     ) : (
-                                        <p style={{ padding: '0 10px', color: '#71717a', fontSize: '0.9rem' }}>ไม่มีจานสีในคอลเลกชันนี้</p>
+                                        <div
+                                            style={{ padding: '24px 10px', color: '#71717a', fontSize: '0.9rem', border: '1.5px dashed #d1d5db', borderRadius: '12px', textAlign: 'center' }}
+                                            onDragOver={(e) => e.preventDefault()} // 📍 ให้พื้นที่ว่างรับการวางได้
+                                            onDragEnter={() => handleDragEnter(0, col.collection_id)}
+                                        >
+                                            ไม่มีจานสีในคอลเลกชันนี้ (ลากจานสีมาวางที่นี่ได้)
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -250,30 +337,45 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
                 })}
 
                 {/* 📦 2. แสดงจานสีที่ "ไม่ได้อยู่ใน Collection" (Uncategorized) */}
-                {/* 📍 ใช้เงื่อนไขแบบตรงไปตรงมา ไม่ต้องซ้อนฟังก์ชัน */}
-                {hasUncategorized && (
+                {showUncategorized && (
                     <section style={{ marginBottom: '16px' }}>
                         <div
                             className="collection-bar"
                             onClick={() => toggleCollection('uncategorized')}
+                            onDragOver={(e) => e.preventDefault()} // 📍 ยอมรับการ Drop
+                            onDragEnter={() => handleDragEnter(uncategorizedPalettes.length, 'uncategorized')}
                             style={{ cursor: 'pointer', backgroundColor: '#52525b' }}
                         >
                             <div className="collection-info">
                                 <Layers size={20} color="#ffffff" />
-                                <span style={{ color: '#ffffff' }}>Uncategorized</span>
+                                <span style={{ color: '#ffffff' }}>Uncategorized ({uncategorizedPalettes.length})</span>
                             </div>
                             <ChevronDown size={20} color="#ffffff" style={{ transform: isUncategorizedExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
                         </div>
 
                         {isUncategorizedExpanded && (
                             <div className="palette-grid" style={{ marginTop: '12px' }}>
-                                {uncategorizedPalettes.map(palette => (
-                                    <PaletteCard
-                                        key={palette.palette_id}
-                                        palette={palette}
-                                        onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)} // 📍 เพิ่มตรงนี้
-                                    />
-                                ))}
+                                {uncategorizedPalettes.length > 0 ? (
+                                    uncategorizedPalettes.map((palette, index) => (
+                                        <PaletteCard
+                                            key={palette.palette_id}
+                                            palette={palette}
+                                            onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)}
+                                            onDragStart={() => handleDragStart(index, 'uncategorized', palette)} // 📍 ส่ง object palette
+                                            onDragEnter={() => handleDragEnter(index, 'uncategorized')}
+                                            onDragEnd={handleDragEnd}
+                                            onSelectPalette={onSelectPalette} // Props ส่งต่อฟังก์ชันมาจาก Parent
+                                        />
+                                    ))
+                                ) : (
+                                    <div
+                                        style={{ padding: '24px 10px', color: '#71717a', fontSize: '0.9rem', border: '1.5px dashed #d1d5db', borderRadius: '12px', textAlign: 'center' }}
+                                        onDragOver={(e) => e.preventDefault()} // 📍 ให้พื้นที่ว่างรับการวางได้
+                                        onDragEnter={() => handleDragEnter(0, 'uncategorized')}
+                                    >
+                                        ลากจานสีจากคอลเลกชันอื่นมาวางที่นี่ เพื่อนำออกจากโฟลเดอร์
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>
@@ -353,22 +455,42 @@ const MyPalette = ({ isOpen, onClose, userId }) => {
 };
 
 // PaletteCard Component
-const PaletteCard = ({ palette, onDelete }) => {
-    const moodText = palette.mood?.mood_name || 'Mix';
-    const sourceText = palette.source?.source_name || 'Generate';
+const PaletteCard = ({ palette, onDelete, onDragStart, onDragEnter, onDragEnd, onSelectPalette }) => {
+    const [isDraggable, setIsDraggable] = useState(false);
+
+    // ดึงข้อมูลชื่อมู้ดและโหมดแบบปลอดภัย
+    const moodText = palette.moodtone?.mood_name || (Array.isArray(palette.moodtone) ? palette.moodtone[0]?.mood_name : 'Random');
+    const sourceText = palette.sourcetype?.source_name || (Array.isArray(palette.sourcetype) ? palette.sourcetype[0]?.source_name : 'Generate');
+
+    const sortedColors = (palette.paletteDetail || [])
+        .sort((a, b) => a.order_index - b.order_index);
+
+    let displayColors = sortedColors.filter(detail => String(detail.role_id) !== '3');
+
+    if (displayColors.length >= 12) {
+        displayColors = displayColors.slice(0, displayColors.length - 11);
+    }
+
     return (
-        <div className="palette-card">
+        <div
+            className="palette-card"
+            draggable={isDraggable}
+            onDragStart={onDragStart}
+            onDragEnter={onDragEnter}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => {
+                if (onSelectPalette) onSelectPalette(palette);
+            }}
+            style={{ cursor: isDraggable ? 'grab' : 'pointer' }}
+        >
             {/* ฝั่งซ้าย: ชื่อ และ แถบสี */}
             <div className="palette-left">
                 <span className="palette-name">{palette.palette_name || 'My Palette'}</span>
 
-                {/* 📍 แก้ไขส่วนแสดงผลสีตรงนี้ */}
                 <div className="color-blocks">
-                    {palette.paletteDetail?.map((detail, index) => {
-                        // 1. เข้าถึง hex_value ที่ซ้อนอยู่ในตาราง color (ถ้าดึงไม่ได้ให้เป็นสีเทา CCCCCC)
+                    {displayColors.map((detail, index) => {
                         const rawHex = detail.color?.hex_value || 'CCCCCC';
-
-                        // 2. เช็คว่ามีเครื่องหมาย # นำหน้าหรือยัง ถ้ายังให้เติมเข้าไป
                         const bgColor = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
 
                         return (
@@ -381,23 +503,52 @@ const PaletteCard = ({ palette, onDelete }) => {
                         );
                     })}
                 </div>
-                {/* ------------------------- */}
-
             </div>
 
             {/* ฝั่งขวา: รายละเอียด และ ไอคอน */}
             <div className="palette-right">
-                <div className="palette-meta">
-                    Mood&Tone: {moodText} / From: {sourceText}
+                <div className="palette-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                    <span>Mood&Tone: {moodText} / From: {sourceText}</span>
+                    
+                    {/* ไอคอน Grip สำหรับจับลาก */}
+                    <div 
+                        style={{ cursor: 'grab', display: 'flex', alignItems: 'center', color: '#9ca3af', padding: '4px' }} 
+                        title="Drag to reorder"
+                        onMouseEnter={() => setIsDraggable(true)}   
+                        onMouseLeave={() => setIsDraggable(false)}  
+                        onClick={(e) => e.stopPropagation()} 
+                    >
+                        <Grip size={16} />
+                    </div>
                 </div>
-                <div className="palette-actions">
-                    <button className="action-btn" title="Export">
-                        <ArrowUpRight size={22} strokeWidth={2} />
+
+                <div className="palette-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    
+                    {/* 📍 เพิ่มปุ่ม "Open" สีดำให้เห็นชัดเจน ป้องกันปัญหากดการ์ดไม่ติด */}
+                    <button
+                        className="action-btn"
+                        title="Open Palette"
+                        onClick={(e) => {
+                            e.stopPropagation(); // หยุดไม่ให้ตีกับการลาก
+                            if (onSelectPalette) onSelectPalette(palette);
+                        }}
+                        style={{ 
+                            backgroundColor: '#18181b', color: '#ffffff', 
+                            padding: '6px 16px', borderRadius: '6px', 
+                            fontSize: '0.85rem', fontWeight: '600'
+                        }}
+                    >
+                        Open
                     </button>
-                    <button className="action-btn" title="Options">
-                        <Grip size={22} strokeWidth={2} />
-                    </button>
-                    <button className="action-btn delete-btn" title="Delete" onClick={onDelete}>
+
+                    <button
+                        className="action-btn delete-btn"
+                        title="Delete"
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            onDelete();
+                        }}
+                    >
                         <Trash2 size={22} strokeWidth={2} />
                     </button>
                 </div>
@@ -405,5 +556,4 @@ const PaletteCard = ({ palette, onDelete }) => {
         </div>
     );
 };
-
 export default MyPalette;

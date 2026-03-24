@@ -303,41 +303,65 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode }) => {
   const [loadedNeutralShades, setLoadedNeutralShades] = useState([]);
 
   // โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
+  // 📍 โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
+ // 📍 โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
   useEffect(() => {
     if (paletteToEdit) {
       const details = paletteToEdit.paletteDetail || [];
+      
+      let sortedColors = details.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
-      // 📍 แยกสีหลัก (Primary & Secondary ไม่เกิน 6 สี)
-      const mainColors = details
-        .filter(d => String(d.role_id) !== '3')
-        .sort((a, b) => a.order_index - b.order_index)
-        .slice(0, 6);
+      if (sortedColors.length > 0) {
+        const primaryHex = sortedColors[0].color?.hex_value?.replace('#', '').toUpperCase() || 'FFFFFF';
+        const autoNeutrals = generateNeutralShades(primaryHex).map(c => c.toUpperCase());
 
-      // 📍 แยกสี Neutral (Role 3 หรือ สีที่เกินมาจาก 6 อันแรก)
-      const dbNeutralColors = details
-        .filter(d => String(d.role_id) === '3' || d.order_index > 6)
-        .sort((a, b) => a.order_index - b.order_index);
+        let mainColors = [];
+        let dbNeutrals = []; // 📍 1. สร้างตัวแปรมารับสีขยะ/สี Neutral
+        
+        for (let i = 0; i < sortedColors.length; i++) {
+            const detail = sortedColors[i];
+            const hex = detail.color?.hex_value?.replace('#', '').toUpperCase();
+            
+            // กฎข้อ 1: ถ้าเป็น Neutral (role_id = 3) ให้จับโยนเข้า dbNeutrals
+            if (String(detail.role_id) === '3') {
+                dbNeutrals.push(hex);
+                continue;
+            }
 
-      if (mainColors.length > 0) {
-        const primaryHex = mainColors[0].color?.hex_value?.replace('#', '') || 'FFFFFF';
+            // กฎข้อ 2: ถ้าเจอสีที่หน้าตาเหมือน Neutral ให้หยุดดึงเข้า Main แล้วโกยที่เหลือลง Neutral ให้หมด
+            if (i > 0 && (hex === autoNeutrals[0] || hex === autoNeutrals[1] || hex === autoNeutrals[2])) {
+                dbNeutrals.push(hex);
+                for (let j = i + 1; j < sortedColors.length; j++) {
+                    dbNeutrals.push(sortedColors[j].color?.hex_value?.replace('#', '').toUpperCase());
+                }
+                break; 
+            }
+
+            // กฎข้อ 3: ใส่สีเข้า Main แต่ถ้าเกิน 6 สี ให้ปัดไปอยู่ Neutral แทน
+            if (mainColors.length < 6) {
+                mainColors.push(detail);
+            } else {
+                dbNeutrals.push(hex);
+            }
+        }
+
+        // 2. อัปเดตช่อง Primary
         setPrimary({ id: 'primary', value: primaryHex, isLocked: false });
 
-        const newSecondary = mainColors.slice(1, 6).map((detail, index) => ({
+        // 3. อัปเดตช่อง Secondary
+        const newSecondary = mainColors.slice(1).map((detail, index) => ({
           id: `sec-${Date.now()}-${index}`,
           value: detail.color?.hex_value?.replace('#', '') || 'CCCCCC',
           isLocked: false
         }));
         setSecondary(newSecondary);
-      }
 
-      // 📍 เอาสี Neutral เก่ามาเก็บไว้ใน State
-      if (dbNeutralColors.length > 0) {
-        setLoadedNeutralShades(dbNeutralColors.map(d => d.color?.hex_value?.replace('#', '') || 'CCCCCC'));
-      } else {
-        setLoadedNeutralShades([]);
+        // 📍 4. เรียกใช้งานฟังก์ชันที่แจ้งเตือน Warning แล้ว! (เอาสีที่แยกไว้ไปแสดงผล)
+        setLoadedNeutralShades(dbNeutrals);
       }
     } else {
-      setLoadedNeutralShades([]); // ล้างค่าเมื่อออกจากโหมด Edit
+      // 📍 เคลียร์ค่าเมื่อออกจากโหมดแก้ไข
+      setLoadedNeutralShades([]);
     }
   }, [paletteToEdit, setPrimary, setSecondary]);
 

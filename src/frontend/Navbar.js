@@ -3,13 +3,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Moon, User, Palette, ChevronDown } from 'lucide-react';
 import './Navbar.css';
 import { supabase } from '../backend/supabaseClient';
-import MyPalette from './MyPalette'; // 📍 นำเข้า Component MyPalette ที่คุณสร้างไว้
+// import MyPalette from './MyPalette'; // 📍 นำเข้า Component MyPalette ที่คุณสร้างไว้
 
-const Navbar = ({ activeTab, setActiveTab }) => {
+const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
     const [user, setUser] = useState(null);
     const [dbUser, setDbUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isMyPaletteModalOpen, setIsMyPaletteModalOpen] = useState(false);
+    // const [isMyPaletteModalOpen, setIsMyPaletteModalOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     const syncUserToDB = async (authUser) => {
@@ -134,13 +134,10 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
                             {isDropdownOpen && (
                                 <div className="profile-dropdown">
-                                    <button className="dropdown-item" onClick={() => {
-                                                setIsMyPaletteModalOpen(true);
-                                                setIsDropdownOpen(false);
-                                            }}
+                                    <button className="dropdown-item" onClick={openMyPalette}
                                         >
                                         <Palette size={20} />
-                                        <span>My Palette</span>
+                                        <span>My Palettes</span>
                                     </button>
                                     <div className="dropdown-divider"></div>
                                     <button className="dropdown-item logout-text" onClick={handleLogout}>
@@ -158,11 +155,11 @@ const Navbar = ({ activeTab, setActiveTab }) => {
             </nav>
 
             {/* 📍 หน้าต่าง Modal MyPalette จะถูกเรนเดอร์ตรงนี้ */}
-            <MyPalette 
+            {/* <MyPalette 
                 isOpen={isMyPaletteModalOpen} 
                 onClose={() => setIsMyPaletteModalOpen(false)} 
                 userId={user?.id}
-            />
+            /> */}
         </>
     );
 };

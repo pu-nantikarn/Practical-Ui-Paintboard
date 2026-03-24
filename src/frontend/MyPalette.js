@@ -316,9 +316,7 @@ const MyPalette = ({ isOpen, onClose, userId, onSelectPalette }) => {
                                                 onDragStart={() => handleDragStart(index, col.collection_id, palette)}
                                                 onDragEnter={() => handleDragEnter(index, col.collection_id)}
                                                 onDragEnd={handleDragEnd}
-                                                // ====== 📍 ส่วนที่เพิ่มเข้ามาใหม่ ======
-                                                onSelectPalette={onSelectPalette} // Props ส่งต่อฟังก์ชันมาจาก Parent
-                                            // ===================================
+                                                onSelectPalette={onSelectPalette}
                                             />
                                         ))
                                     ) : (
@@ -361,10 +359,10 @@ const MyPalette = ({ isOpen, onClose, userId, onSelectPalette }) => {
                                             key={palette.palette_id}
                                             palette={palette}
                                             onDelete={() => handleDeletePalette(palette.palette_id, palette.palette_name)}
-                                            onDragStart={() => handleDragStart(index, 'uncategorized', palette)} // 📍 ส่ง object palette
+                                            onDragStart={() => handleDragStart(index, 'uncategorized', palette)}
                                             onDragEnter={() => handleDragEnter(index, 'uncategorized')}
                                             onDragEnd={handleDragEnd}
-                                            onSelectPalette={onSelectPalette} // Props ส่งต่อฟังก์ชันมาจาก Parent
+                                            onSelectPalette={onSelectPalette}
                                         />
                                     ))
                                 ) : (
@@ -509,32 +507,31 @@ const PaletteCard = ({ palette, onDelete, onDragStart, onDragEnter, onDragEnd, o
             <div className="palette-right">
                 <div className="palette-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                     <span>Mood&Tone: {moodText} / From: {sourceText}</span>
-                    
+
                     {/* ไอคอน Grip สำหรับจับลาก */}
-                    <div 
-                        style={{ cursor: 'grab', display: 'flex', alignItems: 'center', color: '#9ca3af', padding: '4px' }} 
+                    <div
+                        style={{ cursor: 'grab', display: 'flex', alignItems: 'center', color: '#9ca3af', padding: '4px' }}
                         title="Drag to reorder"
-                        onMouseEnter={() => setIsDraggable(true)}   
-                        onMouseLeave={() => setIsDraggable(false)}  
-                        onClick={(e) => e.stopPropagation()} 
+                        onMouseEnter={() => setIsDraggable(true)}
+                        onMouseLeave={() => setIsDraggable(false)}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <Grip size={16} />
                     </div>
                 </div>
 
                 <div className="palette-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    
-                    {/* 📍 เพิ่มปุ่ม "Open" สีดำให้เห็นชัดเจน ป้องกันปัญหากดการ์ดไม่ติด */}
                     <button
                         className="action-btn"
                         title="Open Palette"
                         onClick={(e) => {
-                            e.stopPropagation(); // หยุดไม่ให้ตีกับการลาก
+                            e.preventDefault();
+                            e.stopPropagation(); 
                             if (onSelectPalette) onSelectPalette(palette);
                         }}
-                        style={{ 
-                            backgroundColor: '#18181b', color: '#ffffff', 
-                            padding: '6px 16px', borderRadius: '6px', 
+                        style={{
+                            backgroundColor: '#18181b', color: '#ffffff',
+                            padding: '6px 16px', borderRadius: '6px',
                             fontSize: '0.85rem', fontWeight: '600'
                         }}
                     >
@@ -545,7 +542,7 @@ const PaletteCard = ({ palette, onDelete, onDragStart, onDragEnter, onDragEnd, o
                         className="action-btn delete-btn"
                         title="Delete"
                         onClick={(e) => {
-                            e.stopPropagation(); 
+                            e.stopPropagation();
                             onDelete();
                         }}
                     >

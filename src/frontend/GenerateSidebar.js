@@ -287,7 +287,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
-const GenerateSidebar = ({ paletteToEdit, onExitEditingMode }) => {
+const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
   const moods = ['Random', 'Harmony', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
   const { genPrimary: primary, setGenPrimary: setPrimary, genSecondary: secondary, setGenSecondary: setSecondary } = useContext(ColorContext);
@@ -547,6 +547,115 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode }) => {
     });
   };
 
+  // 📍 State และฟังก์ชันสำหรับ Modal ของ Admin (เพิ่มใหม่)
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [templatePaletteName, setTemplatePaletteName] = useState('New Template');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  const handleSaveSystemTemplate = async () => {
+    if (!templatePaletteName.trim()) {
+      alert("กรุณาตั้งชื่อจานสีสำเร็จรูปครับ");
+      return;
+    }
+    if (!currentColors || currentColors.length === 0) {
+      alert('ยังไม่มีสีให้บันทึกครับ');
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        alert('กรุณาลงชื่อเข้าใช้ก่อนครับ');
+        setIsSavingTemplate(false);
+        return;
+      }
+
+      let mood_id = 1;
+      let source_id = 1;
+      try {
+        let currentMood = activeMood || 'Random';
+        const { data: moodData } = await supabase.from('moodtone').select('mood_id').eq('mood_name', currentMood).single();
+        if (moodData) mood_id = moodData.mood_id;
+
+        const { data: sourceData } = await supabase.from('sourcetype').select('source_id').eq('source_name', 'Generate').single();
+        if (sourceData) source_id = sourceData.source_id;
+      } catch (e) { console.log(e); }
+
+      // 1. เพิ่ม Palette
+      const { data: newPalette, error: paletteError } = await supabase
+        .from('palette')
+        .insert([{
+          palette_name: templatePaletteName.trim(),
+          user_id: userId,
+          mood_id: mood_id,
+          source_id: source_id,
+          is_public: false,
+          is_template: true,
+          collection_id: null
+        }])
+        .select('palette_id')
+        .single();
+      if (paletteError) throw paletteError;
+
+     // 2. ตรวจสอบและบันทึกสี
+      for (let i = 0; i < currentColors.length; i++) {
+        const hex = currentColors[i].toUpperCase();
+        let color_id;
+        
+        // 📍 1. เปลี่ยนจาก .single() เป็น .maybeSingle() เพื่อไม่ให้เกิด Error 406 เวลาหาสีไม่เจอ
+        const { data: existingColor } = await supabase
+          .from('color')
+          .select('color_id')
+          .eq('hex_value', hex)
+          .maybeSingle(); 
+        
+        if (existingColor) {
+          color_id = existingColor.color_id;
+        } else {
+          // 📍 2. ถ้าไม่เจอสีในระบบ ให้คำนวณค่า RGB และ HSL ให้ครบถ้วนก่อนบันทึก
+          const { r, g, b } = hexToRgb(hex);
+          const { h, s, l } = rgbToHsl(r, g, b);
+
+          const { data: insertedColor, error: colorError } = await supabase
+            .from('color')
+            .insert([{ 
+              hex_value: hex,
+              r_value: r,
+              g_value: g,
+              b_value: b,
+              h_value: h,
+              s_value: s,
+              l_value: l
+            }])
+            .select('color_id')
+            .single();
+            
+          if (colorError) throw colorError;
+          color_id = insertedColor.color_id;
+        }
+
+        // 3. ผูกสีเข้ากับจานสีใหม่ (PaletteDetail)
+        const { error: detailError } = await supabase.from('paletteDetail').insert([{
+          palette_id: newPalette.palette_id,
+          color_id: color_id,
+          order_index: i
+        }]);
+        if (detailError) throw detailError;
+      }
+
+      alert('✅ เพิ่มจานสีสำเร็จรูปเรียบร้อยแล้ว!');
+      setIsTemplateModalOpen(false);
+      setTemplatePaletteName('New System Template');
+    } catch (error) {
+      console.error('Save Template Error:', error);
+      alert(`เกิดข้อผิดพลาด: ${error.message}`);
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
   return (
     <aside className="sidebar-container">
       {/* 📍 เพิ่ม UI ส่วนหัวเมื่ออยู่ในโหมดแก้ไขจานสี */}
@@ -632,7 +741,49 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode }) => {
 
       </div>
 
-      <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
+      <div className="bottom-action-group">
+        <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
+        
+        {isAdmin && !isEditingSavedPalette && currentColors.length > 0 && (
+          <button className="admin-add-template-btn" onClick={() => setIsTemplateModalOpen(true)}>
+            <Plus size={16} /> Add Template
+          </button>
+        )}
+      </div>
+
+      {/* 📍 หน้าต่าง Modal ของ Admin (แสดงเมื่อกดปุ่ม) */}
+      {isTemplateModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsTemplateModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '350px', padding: '24px', borderRadius: '12px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.2rem', color: '#111827' }}>เพิ่มจานสีสำเร็จรูป</h3>
+            <p style={{ fontSize: '0.9rem', color: '#4b5563', marginBottom: '8px' }}>ตั้งชื่อ Template:</p>
+            <input
+              type="text"
+              value={templatePaletteName}
+              onChange={(e) => setTemplatePaletteName(e.target.value)}
+              placeholder="เช่น Earth Tone..."
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', marginBottom: '20px', boxSizing: 'border-box', fontSize: '0.95rem' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                onClick={() => setIsTemplateModalOpen(false)}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer', color: '#374151', fontWeight: '500' }}
+                disabled={isSavingTemplate}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleSaveSystemTemplate}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#111827', color: 'white', cursor: 'pointer', fontWeight: '600' }}
+                disabled={isSavingTemplate}
+              >
+                {isSavingTemplate ? 'Saving...' : 'เพิ่มใน Explore'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <SavePalette
         isOpen={isSaveModalOpen}

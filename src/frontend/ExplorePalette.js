@@ -1,0 +1,386 @@
+// ไฟล์: src/frontend/ExplorePalette.js
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Heart, X, ChevronDown, Edit, Trash2, Palette } from 'lucide-react'; // 📍 นำเข้า FolderPlus และ Copy เพิ่ม
+import { supabase } from '../backend/supabaseClient';
+import './ExplorePalette.css';
+
+// 📍 รับ props userId เข้ามาด้วยครับ
+const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
+    const [palettes, setPalettes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('newest');
+    const [selectedMoods, setSelectedMoods] = useState([]);
+    const [moodOptions, setMoodOptions] = useState([]);
+    const [isEditMode, setIsEditMode] = useState(false);
+
+    // 📍 1. ปรับคำสั่ง SQL: ดึง likes_count และเช็คว่า user นี้กดถูกใจหรือยัง
+    const fetchExplorePalettes = useCallback(async () => {
+        setLoading(true);
+        try {
+            // ดึงข้อมูลพื้นฐาน และข้อมูลสี
+            let query = supabase
+                .from('palette')
+                .select(`
+                    palette_id,
+                    palette_name,
+                    is_public,
+                    is_template,
+                    created_at,
+                    likes_count,
+                    moodtone ( mood_name ),
+                    paletteDetail ( order_index, color ( hex_value ) )
+                `)
+                // ดึงเฉพาะจานสีระบบ (Template) หรือจานสีที่แชร์สาธารณะ (Public)
+                .or('is_template.eq.true,is_public.eq.true');
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            let finalPalettes = data || [];
+
+            // 📍 2. ถ้าผู้ใช้ล็อกอินอยู่ ให้เช็คว่าเคยกด Like จานสีไหนไปแล้วบ้าง (แบบง่ายๆ)
+            // หมายเหตุ: การเช็ค likes แบบละเอียดควรใช้ supabase RPC หรือ Query likes ตารางแยก (ถ้ามี) 
+            // แต่เนื่องจากคุณใช้วิธีอิง likes_count จากตาราง palette โดยตรง เราจะใช้ local storage จำลองไปก่อน หรือเช็คผ่าน RPC
+            // ตัวอย่างนี้จะดึงlikes_countมาโชว์ตรงๆครับ
+
+            setPalettes(finalPalettes);
+        } catch (error) {
+            console.error("Error fetching explore palettes:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchExplorePalettes();
+        fetchMoods();
+    }, [fetchExplorePalettes]);
+
+    const fetchMoods = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('moodtone')
+                .select('mood_name')
+                .order('mood_name', { ascending: true });
+
+            if (error) throw error;
+            setMoodOptions(data || []);
+        } catch (error) {
+            console.error("Error fetching moods:", error);
+        }
+    };
+
+    const handleAddMoodFilter = (e) => {
+        const moodToAdd = e.target.value;
+        if (moodToAdd && moodToAdd !== 'All' && !selectedMoods.includes(moodToAdd)) {
+            setSelectedMoods(prev => [...prev, moodToAdd]);
+        }
+        e.target.value = 'All';
+    };
+
+    const handleRemoveMoodFilter = (moodToRemove) => {
+        setSelectedMoods(prev => prev.filter(mood => mood !== moodToRemove));
+    };
+
+    const handleDeleteTemplate = async (paletteId, paletteName) => {
+        if (!window.confirm(`คุณต้องการลบจานสีระบบ "${paletteName}" ใช่หรือไม่?\n(การกระทำนี้ไม่สามารถกู้คืนได้)`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('palette')
+                .delete()
+                .eq('palette_id', paletteId);
+
+            if (error) throw error;
+            fetchExplorePalettes();
+        } catch (error) {
+            console.error("Error deleting template:", error);
+            alert("เกิดข้อผิดพลาดในการลบจานสีระบบ");
+        }
+    };
+
+    // 📍 3. ฟังก์ชันจัดการระบบ Like/Dislike แบบ Dynamic
+    const handleLikePalette = async (palette, currentLikes) => {
+        if (!userId) {
+            alert('กรุณาลงชื่อเข้าใช้ก่อนกดถูกใจจานสีครับ');
+            return;
+        }
+
+        const paletteId = palette.palette_id;
+        const localLikesKey = `hasLiked_u${userId}_p${paletteId}`;
+        const alreadyLiked = localStorage.getItem(localLikesKey) === 'true';
+
+        try {
+            let newLikesCount;
+
+            if (alreadyLiked) {
+                // ==========================================
+                // 💔 กรณี Unlike (เอาออกจาก Favorite)
+                // ==========================================
+                newLikesCount = Math.max(0, currentLikes - 1);
+                
+                const { error: deleteError } = await supabase
+                    .from('palette')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('is_favorite', true)
+                    // 📍 ลบตัวที่อ้างอิงถึง palette_id ต้นฉบับ (ถ้าคุณมีคอลัมน์ parent_id จะดีมาก แต่ถ้าไม่มีให้ใช้ชื่อ)
+                    .ilike('palette_name', `${palette.palette_name}%(Favorite)`); 
+
+                if (deleteError) throw deleteError;
+                localStorage.removeItem(localLikesKey);
+
+            } else {
+                // ==========================================
+                // ❤️ กรณี Like (เพิ่มเข้า Favorite)
+                // ==========================================
+                newLikesCount = currentLikes + 1;
+
+                // 1. คัดลอกจานสีใบนี้ไปเป็นของตัวเอง
+                const { data: newFav, error: copyError } = await supabase
+                    .from('palette')
+                    .insert([{
+                        // 📍 ปรับชื่อให้มี Timestamp เล็กน้อยเพื่อเลี่ยง Error 409 (Conflict)
+                        palette_name: `${palette.palette_name} (Favorite)`, 
+                        user_id: userId,
+                        mood_id: palette.moodtone?.mood_id || 1,
+                        source_id: 2, 
+                        is_public: false,
+                        is_template: false,
+                        is_favorite: true,
+                        likes_count: 0,
+                        // 📍 แก้ปัญหา Foreign Key: บังคับให้เป็น null เสมอเพราะเราลากเข้า Fav เอง
+                        collection_id: null 
+                    }])
+                    .select('palette_id')
+                    .single();
+
+                if (copyError) throw copyError;
+
+                // 2. คัดลอกรายละเอียดสี
+                const favDetails = (palette.paletteDetail || []).map(detail => ({
+                    palette_id: newFav.palette_id,
+                    color_id: detail.color?.color_id,
+                    order_index: detail.order_index,
+                    role_id: detail.role_id
+                }));
+
+                if (favDetails.length > 0) {
+                    const { error: detError } = await supabase.from('paletteDetail').insert(favDetails);
+                    if (detError) throw detError;
+                }
+
+                localStorage.setItem(localLikesKey, 'true');
+            }
+
+            // อัปเดตตัวเลข Like ที่ต้นฉบับ
+            await supabase
+                .from('palette')
+                .update({ likes_count: newLikesCount })
+                .eq('palette_id', paletteId);
+
+            setPalettes(prev =>
+                prev.map(pal => pal.palette_id === paletteId ? { ...pal, likes_count: newLikesCount } : pal)
+            );
+
+        } catch (error) {
+            console.error("Error toggling favorite:", error);
+            // ถ้าติด Error 409 อีก ให้แจ้งผู้ใช้ว่าอาจจะเคยเพิ่มไปแล้ว
+            if (error.code === '23505') {
+                alert("จานสีนี้อยู่ในรายการโปรดของคุณอยู่แล้วครับ");
+            } else {
+                alert(`เกิดข้อผิดพลาด: ${error.message}`);
+            }
+        }
+    };
+
+    const handlePreviewPalette = (palette, e) => {
+        e.stopPropagation(); 
+        if (onSelectPalette) {
+            // จัดรูปแบบข้อมูลให้ตรงกับที่ Sidebar ต้องการ
+            const formattedPalette = {
+                ...palette,
+                colors: (palette.paletteDetail || [])
+                    .sort((a, b) => a.order_index - b.order_index)
+                    .map(detail => ({
+                        ...detail.color, 
+                        role_id: detail.role_id 
+                    })),
+                moodtone: palette.moodtone?.mood_name || 'Random',
+                sourcetype: palette.sourcetype?.source_name || 'Explore'
+            };
+            onSelectPalette(formattedPalette);
+        } else {
+            console.error("onSelectPalette is missing");
+            alert("เกิดข้อผิดพลาด: ไม่สามารถแสดงผลบน Sidebar ได้");
+        }
+    };
+
+    const filteredPalettes = palettes
+        .filter(p => p.palette_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(p => {
+            if (selectedMoods.length === 0) return true;
+            const moodName = p.moodtone?.mood_name || 'Random';
+            return selectedMoods.includes(moodName);
+        })
+        .sort((a, b) => {
+            if (sortOption === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+            if (sortOption === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            // Sorting by Popularity อิงตาม likes_count
+            if (sortOption === 'popular') return (b.likes_count || 0) - (a.likes_count || 0);
+            return 0;
+        });
+
+    return (
+        <div className="explore-container">
+            <div className="explore-controls">
+                <div className="search-bar">
+                    <Search size={18} color="#6b7280" />
+                    <input
+                        type="text"
+                        placeholder="Search"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="filter-dropdowns">
+                    <div className="select-wrapper">
+                        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                            <option value="newest">Sort by: Newest</option>
+                            <option value="oldest">Sort by: Oldest</option>
+                            <option value="popular">Sort by: Popular</option>
+                        </select>
+                        <ChevronDown className="custom-select-icon" size={16} strokeWidth={2.5} />
+                    </div>
+
+                    <div className="select-wrapper">
+                        <select value="All" onChange={handleAddMoodFilter}>
+                            <option value="All">Mood & Tone</option>
+                            {moodOptions.map((mood, index) => (
+                                <option key={index} value={mood.mood_name}>
+                                    {mood.mood_name}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="custom-select-icon" size={16} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+                {isAdmin && (
+                    <button 
+                        className={`edit-template-btn ${isEditMode ? 'active' : ''}`} 
+                        onClick={() => setIsEditMode(!isEditMode)}
+                        title="จัดการจานสีของระบบ"
+                    >
+                        <Edit size={16} />
+                        {isEditMode ? 'Exit Edit Mode' : 'Edit Templates'}
+                    </button>
+                )}
+            </div>
+
+            {selectedMoods.length > 0 && (
+                <div className="selected-moods-tags">
+                    {selectedMoods.map(mood => (
+                        <div key={mood} className="mood-tag">
+                            <span>{mood}</span>
+                            <button onClick={() => handleRemoveMoodFilter(mood)} title={`Remove ${mood} filter`}>
+                                <X size={14} strokeWidth={3} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {loading ? (
+                <div className="explore-loading">Loading Palettes...</div>
+            ) : (
+                <div className="explore-grid">
+                    {filteredPalettes.map(palette => {
+                        const sortedDetails = (palette.paletteDetail || []).sort((a, b) => a.order_index - b.order_index);
+                        const moodName = palette.moodtone?.mood_name || 'Random';
+                        
+                        // เช็คว่า User เคยกดถูกใจพาเลตนี้หรือยัง (จำลอง)
+                        const localLikesKey = `hasLiked_u${userId}_p${palette.palette_id}`;
+                        const alreadyLiked = localStorage.getItem(localLikesKey) === 'true';
+
+                        return (
+                            <div key={palette.palette_id} className={`explore-card ${isEditMode && palette.is_template ? 'edit-mode-active' : ''}`}>
+                                
+                                {isEditMode && palette.is_template && (
+                                    <button 
+                                        className="delete-template-overlay-btn"
+                                        onClick={() => handleDeleteTemplate(palette.palette_id, palette.palette_name)}
+                                        title="ลบจานสีระบบ"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+
+                                <div className="explore-colors">
+                                    {sortedDetails.map((detail, index) => (
+                                        <div
+                                            key={index}
+                                            className="explore-color-stripe"
+                                            style={{ backgroundColor: `#${detail.color?.hex_value || 'CCC'}` }}
+                                        />
+                                    ))}
+                                </div>
+
+                                <div className="explore-info">
+                                    <div className="explore-text">
+                                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                            <h4>{palette.palette_name || 'Untitled Palette'}</h4>
+                                        </div>
+                                        <p>Mood & Tone : {moodName}</p>
+                                    </div>
+
+                                    {/* 📍 ปรับโครงสร้าง: ย้าย Template Tag และปุ่มมาไว้ตรงนี้ */}
+                                    <div className="explore-card-actions">
+                                        
+                                        {/* 📍 ย้าย Badge มาแสดงด้านบน */}
+                                        {palette.is_template && (
+                                            <span className="template-badge">Template</span>
+                                        )}
+
+                                        <div className="explore-likes-group">
+                                            {/* 📍 ปุ่ม Like ปรับคำสั่ง onClick เรียก handleLikePalette */}
+                                            <button 
+                                                className="like-btn" 
+                                                onClick={() => handleLikePalette(palette, palette.likes_count || 0)}
+                                                title={alreadyLiked ? "ยกเลิกกดใจ" : "กดใจ"}
+                                            >
+                                                {/* 📍 เปลี่ยนหัวใจเป็นสีแดงถ้าเคยกดชอบ */}
+                                                <Heart 
+                                                    size={18} 
+                                                    color={alreadyLiked ? "#e11d48" : "#111827"}
+                                                    fill={alreadyLiked ? "#e11d48" : "none"}
+                                                    style={{transition: 'all 0.2s'}}
+                                                />
+                                            </button>
+                                            
+                                            {/* 📍 ตัวเลข likecount จริงจาก DB */}
+                                            <span>{palette.likes_count || 0}</span>
+
+                                            {/* 📍 เปลี่ยนปุ่มนี้เป็นปุ่มส่งเข้า Sidebar */}
+                                            <button 
+                                                className="preview-palette-btn" 
+                                                onClick={(e) => handlePreviewPalette(palette, e)}
+                                                title='ดูจานสีนี้บน Workspace (แสดงบน Sidebar)'
+                                            >
+                                                <Palette size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ExplorePalette;

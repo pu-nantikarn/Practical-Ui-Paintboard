@@ -1,0 +1,346 @@
+/* ไฟล์: src/frontend/ExplorePalette.css */
+
+.explore-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 32px;
+}
+
+/* --- ส่วนควบคุมด้านบน --- */
+.explore-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    padding: 8px 16px;
+    width: 300px;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.filter-dropdowns {
+    display: flex;
+    flex-direction: row !important; /* 📍 บังคับให้เรียงต่อกันในแนวนอน */
+    align-items: center;
+    gap: 16px;
+    flex-wrap: nowrap; /* 📍 ห้ามตกลงมาซ้อนกันเด็ดขาด */
+}
+
+/* =========================================
+   Custom Select Dropdown
+   ========================================= */
+.select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: auto;
+}
+
+.select-wrapper select {
+    padding: 8px 36px 8px 16px; 
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    background-color: #ffffff;
+    font-size: 0.95rem;
+    color: #4b5563;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    white-space: nowrap;
+}
+
+.custom-select-icon {
+    position: absolute;
+    right: 12px;
+    color: #4b5563;
+    pointer-events: none;
+}
+
+/* =========================================
+   Admin Edit Templates Mode
+   ========================================= */
+.edit-template-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1.5px solid #d1d5db;
+    background-color: #ffffff;
+    color: #4b5563;
+}
+
+.edit-template-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.edit-template-btn.active {
+    background-color: #111827;
+    color: #ffffff;
+    border-color: #111827;
+}
+
+.delete-template-overlay-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444; 
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.delete-template-overlay-btn:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+/* =========================================
+   Selected Mood Tags
+   ========================================= */
+.selected-moods-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: -10px;
+    margin-bottom: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.mood-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.mood-tag span {
+    transform: translateY(-0.5px);
+}
+
+.mood-tag button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-right: -4px;
+}
+
+.mood-tag button:hover {
+    color: #dc2626;
+}
+
+/* --- ส่วนตาราง Grid --- */
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.explore-loading {
+    text-align: center;
+    color: #6b7280;
+    margin-top: 40px;
+}
+
+/* --- การ์ดจานสี (อิงตามรูป) --- */
+.explore-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 300px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative; /* สำคัญสำหรับถังขยะ */
+}
+
+.explore-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.explore-card.edit-mode-active {
+    border: 2px dashed #ef4444;
+}
+
+.explore-colors {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.explore-color-stripe {
+    flex: 1;
+    width: 100%;
+}
+
+/* --- ข้อมูลด้านล่างการ์ด --- */
+.explore-info {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* 📍 ปรับให้ชิดขอบล่างของกลุ่ม text */
+    background-color: #ffffff;
+    gap: 12px;
+}
+
+.explore-text h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+    word-break: break-word; /* กันชื่อยาว */
+}
+
+.explore-text p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* 📍 1. จัดกลุ่ม Action: Badge, Likes, Use Buttons (เพิ่มใหม่) */
+.explore-card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px; /* ระยะระหว่าง Badge กับกลุ่มปุ่ม */
+    flex-shrink: 0;
+}
+
+/* 📍 2. ปรับสไตล์ Badge สำหรับตำแหน่งใหม่ (NEW) */
+.template-badge {
+    background-color: #dbeafe; /* สีฟ้าอ่อน */
+    color: #1d4ed8; /* สีน้ำเงินเข้ม */
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* 📍 3. จัดกลุ่ม Likes และปุ่ม FolderPlus (NEW) */
+.explore-likes-group {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* ระยะห่างระหว่างปุ่ม Like ตัวเลข และปุ่ม Folder */
+    background-color: #f4f4f5; /* เทาอ่อนเบาๆ ให้ดูเป็นกลุ่ม */
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.like-btn, .add-to-collection-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #111827;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.like-btn:hover {
+    color: #e11d48; /* สีแดงตอน Hover */
+    transform: scale(1.1);
+}
+
+.add-to-collection-btn:hover {
+    color: #2563eb; /* สีน้ำเงินตอน Hover */
+    transform: scale(1.1);
+}
+
+.explore-likes-group span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    min-width: 14px; /* กันตัวเลขขยับหน้าเว็บ */
+    text-align: center;
+    transform: translateY(-0.5px); /* จัดกึ่งกลางบรรทัด */
+}
+
+.like-btn, .preview-palette-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #111827;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.like-btn:hover {
+    color: #e11d48; /* สีแดงตอน Hover */
+    transform: scale(1.1);
+}
+
+.preview-palette-btn:hover {
+    color: #be123c; /* สีแดงเข้ม หรือเปลี่ยนเป็น #2563eb สีน้ำเงินก็ได้ครับ */
+    transform: scale(1.1);
+}
+
+.explore-likes-group span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    min-width: 14px; 
+    text-align: center;
+    transform: translateY(-0.5px); 
+}

@@ -1,15 +1,14 @@
 // ไฟล์: src/frontend/Navbar.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, User, Palette, ChevronDown } from 'lucide-react';
+import { Moon, User, Palette, ChevronDown, Compass, X, ShieldCheck } from 'lucide-react';
 import './Navbar.css';
 import { supabase } from '../backend/supabaseClient';
-// import MyPalette from './MyPalette'; // 📍 นำเข้า Component MyPalette ที่คุณสร้างไว้
 
-const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
+
+const Navbar = ({ activeTab, setActiveTab, openMyPalette, isExploreMode, setIsExploreMode }) => {
     const [user, setUser] = useState(null);
     const [dbUser, setDbUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    // const [isMyPaletteModalOpen, setIsMyPaletteModalOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     const syncUserToDB = async (authUser) => {
@@ -29,7 +28,7 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
 
         // ทำการ Upsert ลงตาราง 'users' (ถ้าคุณตั้งชื่อตารางว่า profiles ให้เปลี่ยนตรงนี้นะครับ)
         const { data, error } = await supabase
-            .from('user') 
+            .from('user')
             .upsert(userData, { onConflict: 'user_id' }) // ถ้ารหัส id ซ้ำ ให้ทำการอัปเดต
             .select() // สั่งให้ส่งข้อมูลที่บันทึกเสร็จแล้วกลับมาด้วย
             .single(); // เอาแค่ Record เดียว
@@ -54,7 +53,7 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             const currentUser = session?.user ?? null;
             setUser(currentUser);
-            
+
             if (event === 'SIGNED_IN' && currentUser) {
                 syncUserToDB(currentUser);
             } else if (event === 'SIGNED_OUT') {
@@ -81,12 +80,28 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
             options: {
                 // 📍 เพิ่มบรรทัดนี้: บังคับให้ Google โชว์หน้าเลือกบัญชีทุกครั้งที่กด Login
                 queryParams: {
-                    prompt: 'select_account', 
+                    prompt: 'select_account',
                 },
             },
         });
-        
+
         if (error) console.error('Login error:', error.message);
+    };
+
+    const handleExploreClick = () => {
+        // กดครั้งแรกเปิดโหมด, ถ้าเปิดอยู่แล้วกดกากบาทถึงจะปิด (Logic จะอยู่ใน JSX)
+        if (!isExploreMode) {
+            setIsExploreMode(true);
+            console.log("Navigating to Explore Mode...");
+            // TODO: ใส่ Logic เพิ่มเติมที่นี่ เช่น การดึงจานสีสาธารณะมาแสดงใน Preview
+        }
+    };
+
+    const handleCloseExplore = (e) => {
+        e.stopPropagation(); // สำคัญ! ป้องกันไม่ให้ Event วิ่งไปโดนปุ่ม Explore จนเปิดกลับมาอีกครั้ง
+        setIsExploreMode(false);
+        console.log("Exiting Explore Mode");
+        // TODO: ใส่ Logic เพิ่มเติมที่นี่ เช่น การล้างจานสีสาธารณะออกจากPreview
     };
 
     const handleLogout = async () => {
@@ -110,32 +125,60 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
                 </div>
 
                 <div className="navbar-right">
+                    {isExploreMode ? (
+                        <div className="explore-btn active">
+                            <Compass size={18} />
+                            <span>Explore</span>
+                            <button className="close-explore-btn" onClick={handleCloseExplore} title="Close Explore">
+                                <X size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="explore-btn" onClick={handleExploreClick}>
+                            <Compass size={18} />
+                            <span>Explore</span>
+                        </button>
+                    )}
                     <button className="icon-btn">
                         <Moon size={20} fill="currentColor" />
                     </button>
 
                     {user ? (
                         <div className="profile-container" ref={dropdownRef}>
-                            <button 
-                                className="profile-trigger-btn" 
+                            <button
+                                className="profile-trigger-btn"
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             >
-                                <img 
-                                    src={user.user_metadata.avatar_url} 
-                                    alt="Profile" 
+                                <img
+                                    src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture || `https://ui-avatars.com/api/?name=${user?.user_metadata?.full_name || 'User'}&background=random`}
+                                    alt="Profile"
                                     className="profile-img-nav"
+                                    referrerPolicy="no-referrer"
                                 />
-                                <span className="profile-name-nav">
-                                    {/* ดึงชื่อมาจาก Database แทน (ถ้ายังดึงไม่เสร็จให้ใช้ชื่อจาก Google ไปก่อน) */}
-                                    {dbUser ? dbUser.user_name : user.user_metadata.full_name}
-                                </span>
+
+                                {/* 1. ย้ายชื่อออกไปแล้ว เหลือแค่ Badge กับ Chevron */}
+                                {dbUser?.is_admin && (
+                                    <div className="admin-badge" title="Administrator">
+                                        <ShieldCheck size={12} strokeWidth={2.5} />
+                                        <span>Admin</span>
+                                    </div>
+                                )}
                                 <ChevronDown size={16} className={`chevron-icon ${isDropdownOpen ? 'rotate' : ''}`} />
                             </button>
 
                             {isDropdownOpen && (
                                 <div className="profile-dropdown">
-                                    <button className="dropdown-item" onClick={openMyPalette}
-                                        >
+                                    {/* 2. เพิ่มส่วนแสดงชื่อผู้ใช้ไว้ที่นี่ (บนสุดของ Dropdown) */}
+                                    <div className="dropdown-user-info">
+                                        <span className="dropdown-user-name">
+                                            {dbUser ? dbUser.user_name : user.user_metadata.full_name}
+                                        </span>
+                                        <span className="dropdown-user-email">{user.email}</span>
+                                    </div>
+
+                                    <div className="dropdown-divider"></div>
+
+                                    <button className="dropdown-item" onClick={openMyPalette}>
                                         <Palette size={20} />
                                         <span>My Palettes</span>
                                     </button>
@@ -153,13 +196,6 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette }) => {
                     )}
                 </div>
             </nav>
-
-            {/* 📍 หน้าต่าง Modal MyPalette จะถูกเรนเดอร์ตรงนี้ */}
-            {/* <MyPalette 
-                isOpen={isMyPaletteModalOpen} 
-                onClose={() => setIsMyPaletteModalOpen(false)} 
-                userId={user?.id}
-            /> */}
         </>
     );
 };

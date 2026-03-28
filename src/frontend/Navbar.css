@@ -131,7 +131,7 @@
   gap: 8px;
   background: #f3f4f6; /* สีพื้นหลังอ่อนๆ ให้ดูเป็นปุ่ม */
   border: 1px solid #e5e7eb;
-  padding: 4px 12px 4px 4px; /* ฝั่งซ้ายแคบเพราะมีรูป ฝั่งขวากว้างนิดนึง */
+  padding: 4px 8px;
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.2s;
@@ -265,3 +265,108 @@
   background-color: #d1d5db;
   margin: 6px 24px; /* ระยะห่างเส้นคั่นซ้าย-ขวา */
 }
+
+.dropdown-user-info {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.dropdown-user-name {
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dropdown-user-email {
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================
+   Explore Button (เพิ่มใหม่)
+   ========================================= */
+
+/* สถานะปกติ (ปุ่มแคปซูลขอบมน มีกรอบเหมือนในรูป) */
+.explore-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: none; 
+  color: #4b5563; /* สีตัวหนังสือ/ไอคอน */
+  padding: 6px 16px;
+  border-radius: 999px; /* ทรงแคปซูล */
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.explore-btn:hover {
+  background-color: #f3f4f6; /* โฮเวอร์แล้วเทาอ่อนๆ */
+}
+
+/* สถานะ Active (สีพื้นเทาเข้ม ตัวหนังสือสีขาว) */
+.explore-btn.active {
+  background-color: #3f3f46; /* สีเทาเข้ม */
+  border-color: #3f3f46;
+  color: #ffffff;
+  cursor: default; /* เปลี่ยนเคอร์เซอร์เป็นปกติเพราะไม่ได้ให้กดที่ตัวปุ่มแล้ว */
+}
+
+/* ปุ่มกากบาท (X) ด้านหลังข้อความ */
+.close-explore-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #a1a1aa; /* สีกากบาทแบบยังไม่โฮเวอร์ */
+  padding: 2px;
+  margin-left: 6px; /* ดันให้ห่างจากคำว่า Explore */
+  margin-right: -6px; /* ชดเชยขอบขวาให้ปุ่ม X ดูสมดุล */
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-explore-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.explore-btn span {
+  transform: translateY(-1.5px); /* ค่าติดลบคือขยับขึ้น (ถ้ายังไม่ตรงปรับเป็น -1px หรือ -2px ได้ครับ) */
+  line-height: 1;
+}
+
+/* =========================================
+   Admin Badge
+   ========================================= */
+.admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background-color: #fee2e2; /* พื้นหลังสีแดงอ่อน */
+  color: #dc2626; /* ตัวหนังสือสีแดงเข้ม */
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-left: 2px;
+  margin-right: 2px;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+

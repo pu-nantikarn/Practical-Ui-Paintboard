@@ -8,6 +8,7 @@ import PreviewDashboard from './frontend/PreviewDashboard';
 import { ColorProvider } from './contexts/ColorContext';
 import { supabase } from './backend/supabaseClient';
 import MyPalette from './frontend/MyPalette';
+import ExplorePalette from './frontend/ExplorePalette';
 
 
 function App() {
@@ -17,14 +18,46 @@ function App() {
   });
 
   const [userId, setUserId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isMyPaletteOpen, setIsMyPaletteOpen] = useState(false);
+  const [isExploreMode, setIsExploreMode] = useState(false);
   const [selectedSavedPalette, setSelectedSavedPalette] = useState(null);
 
-  // ดึงข้อมูล User
+  // 📍 1. โค้ดดึงข้อมูล User และสถานะ Admin ที่แก้ไขให้ถูกต้อง 100%
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
-    });
+    const checkUserAndAdminStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        setUserId(user?.id || null);
+
+        if (user) {
+          const { data, error } = await supabase
+            .from('user') //เปลี่ยนเป็นชื่อตาราง user ของคุณ
+            .select('is_admin')
+            .eq('user_id', user.id)
+            .single();
+
+          // 📍 นำตัวแปร error มาใช้งาน (ถ้าดึงข้อมูลไม่สำเร็จให้โชว์แจ้งเตือนใน Console)
+          if (error) {
+            console.error("Error fetching admin status:", error);
+          }
+
+          if (data && data.is_admin) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        setIsAdmin(false);
+      }
+    };
+
+    checkUserAndAdminStatus();
   }, []);
 
   // บันทึก Tab ล่าสุด
@@ -32,7 +65,7 @@ function App() {
     localStorage.setItem('savedActiveTab', activeTab);
   }, [activeTab]);
 
-  // 📍 ฟังก์ชันพระเอก: จัดการเมื่อกดปุ่ม Open จานสี
+  // ฟังก์ชันจัดการเมื่อกดปุ่ม Open จานสี
   const handleSelectSavedPalette = (palette) => {
     try {
       let mode = 'Generate';
@@ -52,7 +85,6 @@ function App() {
       setSelectedSavedPalette(palette);
 
     } catch (error) {
-      // เปลี่ยนจาก alert หน้าจอ เป็นการบันทึกเงียบๆ ใน Console แทน
       console.error("🔴 เกิดข้อผิดพลาดใน App.js:", error);
     }
   }
@@ -65,34 +97,49 @@ function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           openMyPalette={() => setIsMyPaletteOpen(true)}
+          isExploreMode={isExploreMode}
+          setIsExploreMode={setIsExploreMode}
         />
 
         <div className="main-content">
-          {/* 📍 เปลี่ยน key ให้เปลี่ยนไปตาม ID ของจานสี เพื่อบังคับ React รีเฟรชหน้าต่างใหม่เสมอ */}
+          {/* เปลี่ยน key เพื่อบังคับ React รีเฟรชหน้าต่างใหม่เสมอ */}
           {activeTab === 'Generate' ? (
             <GenerateSidebar
               key={`gen-${selectedSavedPalette?.palette_id || 'default'}`}
               paletteToEdit={selectedSavedPalette}
               onExitEditingMode={() => setSelectedSavedPalette(null)}
+              isAdmin={isAdmin}
             />
           ) : (
             <ImageSidebar
               key={`img-${selectedSavedPalette?.palette_id || 'default'}`}
               paletteToEdit={selectedSavedPalette}
               onExitEditingMode={() => setSelectedSavedPalette(null)}
+              isAdmin={isAdmin}
             />
           )}
 
           <main className="workspace">
-            <div className="workspace-controls">
-              <button className="preview-btn active">Dashboard</button>
-              <button className="preview-btn">Website</button>
-              <button className="preview-btn">Mobile App</button>
-              <button className="preview-btn">Components</button>
-            </div>
+            {/* 📍 ซ่อนกลุ่มปุ่ม Dashboard/Website เมื่อเข้าสู่โหมด Explore */}
+            {!isExploreMode && (
+              <div className="workspace-controls">
+                <button className="preview-btn active">Dashboard</button>
+                <button className="preview-btn">Website</button>
+                <button className="preview-btn">Mobile App</button>
+                <button className="preview-btn">Components</button>
+              </div>
+            )}
 
-            <div style={{ flex: 1, width: '100%', maxWidth: '1000px', height: '100%' }}>
-              <PreviewDashboard mode={activeTab} />
+            <div style={{ flex: 1, width: '100%', maxWidth: '1000px', height: '100%', overflowY: 'auto' }}>
+              {isExploreMode ? (
+                <ExplorePalette
+                  isAdmin={isAdmin}
+                  userId={userId}
+                  onSelectPalette={handleSelectSavedPalette}
+                />
+              ) : (
+                <PreviewDashboard mode={activeTab} />
+              )}
             </div>
           </main>
         </div>
@@ -102,7 +149,6 @@ function App() {
         isOpen={isMyPaletteOpen}
         onClose={() => setIsMyPaletteOpen(false)}
         userId={userId}
-        // 📍 บรรทัดนี้สำคัญมาก! ถ้าไม่มีบรรทัดนี้ หรือพิมพ์ผิด จะทำให้เกิด Error สีเหลืองที่คุณเจอครับ
         onSelectPalette={handleSelectSavedPalette}
       />
     </ColorProvider>

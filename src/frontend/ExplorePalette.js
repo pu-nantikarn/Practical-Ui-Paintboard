@@ -15,10 +15,10 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
     const [isEditMode, setIsEditMode] = useState(false);
 
     // 📍 1. ปรับคำสั่ง SQL: ดึง likes_count และเช็คว่า user นี้กดถูกใจหรือยัง
-    const fetchExplorePalettes = useCallback(async () => {
+   const fetchExplorePalettes = useCallback(async () => {
         setLoading(true);
         try {
-            // ดึงข้อมูลพื้นฐาน และข้อมูลสี
+            // 📍 แก้ไขตรงนี้: ดึงข้อมูลที่จำเป็นสำหรับการ Copy ให้ครบถ้วน!
             let query = supabase
                 .from('palette')
                 .select(`
@@ -28,22 +28,16 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                     is_template,
                     created_at,
                     likes_count,
-                    moodtone ( mood_name ),
-                    paletteDetail ( order_index, color ( hex_value ) )
+                    moodtone ( mood_id, mood_name ),
+                    sourcetype ( source_id, source_name ),
+                    paletteDetail ( detail_id, order_index, role_id, color ( color_id, hex_value ) )
                 `)
-                // ดึงเฉพาะจานสีระบบ (Template) หรือจานสีที่แชร์สาธารณะ (Public)
                 .or('is_template.eq.true,is_public.eq.true');
 
             const { data, error } = await query;
             if (error) throw error;
 
             let finalPalettes = data || [];
-
-            // 📍 2. ถ้าผู้ใช้ล็อกอินอยู่ ให้เช็คว่าเคยกด Like จานสีไหนไปแล้วบ้าง (แบบง่ายๆ)
-            // หมายเหตุ: การเช็ค likes แบบละเอียดควรใช้ supabase RPC หรือ Query likes ตารางแยก (ถ้ามี) 
-            // แต่เนื่องจากคุณใช้วิธีอิง likes_count จากตาราง palette โดยตรง เราจะใช้ local storage จำลองไปก่อน หรือเช็คผ่าน RPC
-            // ตัวอย่างนี้จะดึงlikes_countมาโชว์ตรงๆครับ
-
             setPalettes(finalPalettes);
         } catch (error) {
             console.error("Error fetching explore palettes:", error);
@@ -55,6 +49,17 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
     useEffect(() => {
         fetchExplorePalettes();
         fetchMoods();
+        const handleRefresh = () => {
+            fetchExplorePalettes();
+        };
+        
+        // เปิดการรับฟัง
+        window.addEventListener('refreshExplore', handleRefresh);
+
+        // ปิดการรับฟังเมื่อ Component ถูกทำลาย (ลดการทำงานซ้ำซ้อน)
+        return () => {
+            window.removeEventListener('refreshExplore', handleRefresh);
+        }
     }, [fetchExplorePalettes]);
 
     const fetchMoods = async () => {
@@ -298,10 +303,18 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
             ) : (
                 <div className="explore-grid">
                     {filteredPalettes.map(palette => {
-                        const sortedDetails = (palette.paletteDetail || []).sort((a, b) => a.order_index - b.order_index);
+                        // 📍 1. จัดเรียงและกรองสี เอาเฉพาะสีหลัก (ไม่เอา role_id = 3) และโชว์ไม่เกิน 6 สี
+                        let displayColors = (palette.paletteDetail || [])
+                            .sort((a, b) => a.order_index - b.order_index)
+                            .filter(detail => String(detail.role_id) !== '3');
+
+                        if (displayColors.length > 6) {
+                            displayColors = displayColors.slice(0, 6);
+                        }
+
                         const moodName = palette.moodtone?.mood_name || 'Random';
                         
-                        // เช็คว่า User เคยกดถูกใจพาเลตนี้หรือยัง (จำลอง)
+                        // เช็คว่า User เคยกดถูกใจพาเลตนี้หรือยัง
                         const localLikesKey = `hasLiked_u${userId}_p${palette.palette_id}`;
                         const alreadyLiked = localStorage.getItem(localLikesKey) === 'true';
 
@@ -319,15 +332,22 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                                 )}
 
                                 <div className="explore-colors">
-                                    {sortedDetails.map((detail, index) => (
-                                        <div
-                                            key={index}
-                                            className="explore-color-stripe"
-                                            style={{ backgroundColor: `#${detail.color?.hex_value || 'CCC'}` }}
-                                        />
-                                    ))}
+                                    {/* 📍 2. นำสีมากางออก โดยดักจับบั๊ก # เบิ้ล */}
+                                    {displayColors.map((detail, index) => {
+                                        const rawHex = detail.color?.hex_value || 'CCCCCC';
+                                        const bgColor = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
+
+                                        return (
+                                            <div
+                                                key={detail.detail_id || index}
+                                                className="explore-color-stripe"
+                                                style={{ backgroundColor: bgColor }}
+                                            />
+                                        );
+                                    })}
                                 </div>
 
+                                {/* ข้อมูลด้านล่างการ์ด (Explore-info เหมือนเดิม) */}
                                 <div className="explore-info">
                                     <div className="explore-text">
                                         <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>

@@ -542,8 +542,8 @@ const PaletteCard = ({ palette, onDelete, onDragStart, onDragEnter, onDragEnd, o
 
     let displayColors = sortedColors.filter(detail => String(detail.role_id) !== '3');
 
-    if (displayColors.length >= 12) {
-        displayColors = displayColors.slice(0, displayColors.length - 11);
+    if (displayColors.length > 6) {
+        displayColors = displayColors.slice(0, 6);
     }
 
     const handleTogglePublic = async (e) => {

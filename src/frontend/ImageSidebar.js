@@ -731,6 +731,7 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin }) => {
             alert('✅ เพิ่มจานสีสำเร็จรูปเรียบร้อยแล้ว!');
             setIsTemplateModalOpen(false);
             setTemplatePaletteName('New System Template');
+            window.dispatchEvent(new CustomEvent('refreshExplore'));
         } catch (error) {
             console.error('Save Template Error:', error);
             alert(`เกิดข้อผิดพลาด: ${error.message}`);

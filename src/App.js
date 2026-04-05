@@ -5,6 +5,9 @@ import Navbar from './frontend/Navbar';
 import GenerateSidebar from './frontend/GenerateSidebar';
 import ImageSidebar from './frontend/ImageSidebar';
 import PreviewDashboard from './frontend/PreviewDashboard';
+import PreviewWebsite from './frontend/PreviewWebsite';
+import PreviewMobile from './frontend/PreviewMobile';
+import PreviewComponent from './frontend/PreviewComponent';
 import { ColorProvider } from './contexts/ColorContext';
 import { supabase } from './backend/supabaseClient';
 import MyPalette from './frontend/MyPalette';
@@ -22,6 +25,7 @@ function App() {
   const [isMyPaletteOpen, setIsMyPaletteOpen] = useState(false);
   const [isExploreMode, setIsExploreMode] = useState(false);
   const [selectedSavedPalette, setSelectedSavedPalette] = useState(null);
+  const [previewMode, setPreviewMode] = useState('Dashboard');
 
   // 📍 1. โค้ดดึงข้อมูล User และสถานะ Admin ที่แก้ไขให้ถูกต้อง 100%
   useEffect(() => {
@@ -123,22 +127,54 @@ function App() {
             {/* 📍 ซ่อนกลุ่มปุ่ม Dashboard/Website เมื่อเข้าสู่โหมด Explore */}
             {!isExploreMode && (
               <div className="workspace-controls">
-                <button className="preview-btn active">Dashboard</button>
-                <button className="preview-btn">Website</button>
-                <button className="preview-btn">Mobile App</button>
-                <button className="preview-btn">Components</button>
+                <button
+                  className={`preview-btn ${previewMode === 'Dashboard' ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsExploreMode(false);
+                    setPreviewMode('Dashboard')
+                  }}
+                >Dashboard</button>
+
+                <button
+                  className={`preview-btn ${previewMode === 'Website' ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsExploreMode(false);
+                    setPreviewMode('Website')
+                  }}
+                >Website</button>
+
+                <button
+                  className={`preview-btn ${previewMode === 'Mobile' ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsExploreMode(false);
+                    setPreviewMode('Mobile');
+                  }}
+                >Mobile App</button>
+                <button
+                  className={`preview-btn ${previewMode === 'Components' ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsExploreMode(false);
+                    setPreviewMode('Components');
+                  }}
+                >Components</button>
               </div>
             )}
 
             <div style={{ flex: 1, width: '100%', maxWidth: '1000px', height: '100%', overflowY: 'auto' }}>
               {isExploreMode ? (
-                <ExplorePalette
-                  isAdmin={isAdmin}
-                  userId={userId}
-                  onSelectPalette={handleSelectSavedPalette}
-                />
+                <ExplorePalette isAdmin={isAdmin} userId={userId} onSelectPalette={handleSelectSavedPalette} />
               ) : (
-                <PreviewDashboard mode={activeTab} />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  {previewMode === 'Mobile' ? (
+                    <PreviewMobile mode={activeTab} />
+                  ) : previewMode === 'Website' ? (
+                    <PreviewWebsite mode={activeTab} />
+                  ) : previewMode === 'Components' ? (
+                    <PreviewComponent mode={activeTab} />
+                  ) : (
+                    <PreviewDashboard mode={activeTab} />
+                  )}
+                </div>
               )}
             </div>
           </main>

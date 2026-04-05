@@ -1,0 +1,670 @@
+/* ไฟล์: src/frontend/PreviewWebsite.css */
+
+.preview-website {
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+/* Navbar */
+.pw-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+}
+
+.pw-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.pw-logo-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.pw-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid;
+    width: 300px;
+}
+
+.pw-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 12px;
+}
+
+.pw-nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.pw-nav-links span {
+    cursor: pointer;
+}
+
+.pw-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pw-cart-icon {
+    position: relative;
+    cursor: pointer;
+}
+
+.pw-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.pw-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+/* Layout */
+.pw-layout {
+    display: flex;
+    flex: 1;
+}
+
+/* 📍 Left Sidebar - ปรับให้เล็กลง */
+.pw-sidebar {
+    width: 160px;
+    /* ลดจาก 200px */
+    padding: 16px;
+    /* ลดจาก 20px */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* ลดช่องว่าง */
+}
+
+.pw-category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* ลดช่องว่าง */
+}
+
+.pw-category-list li {
+    padding: 6px 10px;
+    /* ลดขนาดกล่องหมวดหมู่ */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* ลดช่องว่างไอค่อนกับข้อความ */
+    cursor: pointer;
+    font-size: 11px;
+    /* เล็กลงนิดหน่อย */
+}
+
+.pw-filters {
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pw-filter-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pw-filter-head span {
+    font-size: 9px;
+    cursor: pointer;
+}
+
+.pw-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.pw-filter-group h5 {
+    margin: 0 0 4px;
+}
+
+.pw-filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.pw-slider-track {
+    height: 4px;
+    border-radius: 2px;
+    position: relative;
+    margin: 8px 0;
+}
+
+.pw-slider-fill {
+    position: absolute;
+    height: 100%;
+    border-radius: 2px;
+}
+
+.pw-slider-thumb {
+    width: 10px;
+    /* เล็กลง */
+    height: 10px;
+    /* เล็กลง */
+    border-radius: 50%;
+    border: 2px solid;
+    position: absolute;
+    top: -3px;
+    transform: translateX(-50%);
+}
+
+.pw-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+}
+
+.pw-promo-box {
+    padding: 12px;
+    /* ลด padding */
+    border-radius: 12px;
+    text-align: left;
+}
+
+.pw-promo-box h4 {
+    margin: 0;
+    font-size: 12px;
+}
+
+.pw-promo-box p {
+    font-size: 9px;
+    margin: 8px 0 10px;
+    line-height: 1.4;
+}
+
+.pw-promo-box button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    font-size: 10px;
+}
+
+/* 📍 Main Content - ปรับให้ใหญ่ขึ้น */
+.pw-main {
+    flex: 1;
+    /* มันจะขยายกว้างขึ้นอัตโนมัติเพราะ Sidebar เล็กลง */
+    padding: 24px;
+    /* เพิ่ม padding ให้ดูโล่งขึ้น */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* 📍 แบนเนอร์ (Hero) ใหญ่ขึ้น */
+.pw-hero {
+    display: flex;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 240px;
+    /* เพิ่มความสูงจาก 200px เป็น 240px */
+}
+
+.pw-hero-content {
+    flex: 1.5;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.pw-hero-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    /* ขยายใหญ่ขึ้น */
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.pw-hero h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+/* ขยาย H1 จาก 24px เป็น 28px */
+.pw-hero p {
+    margin: 0 0 20px;
+    font-size: 14px;
+}
+
+/* ขยาย P จาก 12px เป็น 14px */
+.pw-hero-btns {
+    display: flex;
+    gap: 12px;
+}
+
+.pw-hero-btns button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.pw-hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.pw-hero-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform: scale(3) translateY(30px);
+}
+
+.pw-tabs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pw-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.pw-tabs button {
+    padding: 6px 16px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.pw-view-toggles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pw-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    /* ขยายช่องว่างระหว่างการ์ด */
+}
+
+/* 📍 การ์ดสินค้า ใหญ่ขึ้น */
+.pw-product-card {
+    border: 1px solid;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.pw-product-img {
+    height: 180px;
+    /* ขยายความสูงรูปจาก 140px เป็น 180px */
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.pw-product-real-img {
+    width: 85%; /* ปรับขนาดความกว้างรูปตามต้องการ (เช่น 80% หรือ 90%) */
+    height: 85%;
+    object-fit: contain; /* ทำให้รูปไม่บิดเบี้ยว */
+    transition: transform 0.3s ease; /* (แถม) ใส่ transition เผื่ออยากทำเอฟเฟกต์ */
+}
+.pw-product-card:hover .pw-product-real-img {
+    transform: scale(1.1);
+}
+
+.pw-card-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.pw-heart-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    /* ขยายปุ่มหัวใจ */
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.pw-product-info {
+    padding: 16px;
+    /* เพิ่ม padding ด้านในให้ดูโปร่งขึ้น */
+}
+
+.pw-p-category {
+    font-size: 10px;
+    font-weight: bold;
+    margin: 0 0 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.pw-product-info h4 {
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+
+/* ขยายชื่อสินค้า */
+.pw-p-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pw-p-price-row h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* ขยายราคาสินค้า */
+.pw-add-cart {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.pw-promo-card {
+    border-radius: 12px;
+    padding: 24px;
+    /* ขยาย Padding ให้ดูอลังการขึ้น */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pw-card-badge-small {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: bold;
+    align-self: flex-start;
+}
+
+.pw-promo-card h3 {
+    margin: 12px 0 8px;
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+/* ขยายชื่อคอลเลกชัน */
+.pw-promo-card p {
+    font-size: 12px;
+    margin: 0 0 16px;
+    line-height: 1.4;
+}
+
+.pw-promo-colors {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.pw-promo-colors span {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.pw-promo-card button {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.pw-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.pw-pagination button {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* 📍 Right Sidebar (Cart) - ปรับให้เล็กลง */
+.pw-cart-sidebar {
+    width: 200px;
+    /* ลดจาก 240px */
+    padding: 16px;
+    /* ลดจาก 20px */
+    display: flex;
+    flex-direction: column;
+}
+
+.pw-cart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pw-cart-head h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.pw-badge-light {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.pw-cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pw-cart-item {
+    display: flex;
+    gap: 10px;
+    /* ลดช่องว่าง */
+    padding-bottom: 10px;
+}
+
+.pw-c-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* ป้องกันรูปภาพล้นกรอบเล็กๆ ในตะกร้า */
+}
+
+.pw-cart-real-img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain; /* รักษาอัตราส่วนของรูปภาพไม่ให้บิดเบี้ยว */
+}
+
+.pw-c-details {
+    flex: 1;
+}
+
+.pw-c-details h5 {
+    margin: 0 0 6px;
+    font-size: 10px;
+}
+
+/* ลดขนาดตัวอักษรนิดนึง */
+.pw-c-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pw-c-price-row span {
+    font-size: 11px;
+}
+
+.pw-qty {
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.pw-cart-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 11px;
+}
+
+.pw-summary-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.pw-total {
+    padding-top: 10px;
+    align-items: center;
+}
+
+.pw-total h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.pw-checkout-btn {
+    padding: 10px;
+    /* ลดความหนาของปุ่มนิดนึง */
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.pw-secure-text {
+    text-align: center;
+    font-size: 9px;
+    margin: 0;
+}
+
+/* Bottom Services */
+.pw-services-section {
+    padding: 20px 24px;
+}
+
+.pw-services-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pw-services-head h2 {
+    margin: 0;
+}
+
+.pw-services-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+}
+
+.pw-svc-card {
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+}
+
+.pw-svc-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 10px;
+    text-align: center;
+}

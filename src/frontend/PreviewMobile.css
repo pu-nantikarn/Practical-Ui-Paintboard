@@ -1,0 +1,382 @@
+/* ไฟล์: src/frontend/PreviewComponent.css */
+
+.preview-component-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.pc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Base Card Style */
+.pc-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid;
+    border-radius: 16px;
+    background-color: #ffffff;
+    overflow: hidden;
+    height: 220px;
+}
+
+.pc-card-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.pc-card-footer {
+    border-top: 1px solid;
+    padding: 12px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+/* 1. Button */
+.pc-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* 2. Group Profile */
+.pc-group-profile {
+    display: flex;
+    align-items: center;
+}
+.pc-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-left: -12px;
+}
+.pc-avatar:first-child { margin-left: 0; }
+.pc-avatar-more { border: 2px solid #fff; font-size: 12px; }
+
+/* 3. Profile */
+.pc-avatar-single {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 1px solid;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* 4. Icon */
+.pc-icon-group {
+    display: flex;
+    gap: 16px;
+}
+.pc-icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+}
+
+/* 5. Badge */
+.pc-badge {
+    padding: 8px 24px;
+    border-radius: 20px;
+    border: 1px solid;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* 6. Radio */
+.pc-radio-group {
+    display: flex;
+    gap: 20px;
+}
+.pc-radio {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pc-radio-inner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+/* 7. Checkbox */
+.pc-checkbox-group {
+    display: flex;
+    gap: 24px;
+}
+.pc-check {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 8. Toggle */
+.pc-toggle {
+    width: 64px;
+    height: 32px;
+    border-radius: 20px;
+    position: relative;
+    box-sizing: border-box;
+}
+.pc-toggle.inactive { border: 1px solid; }
+.pc-toggle-knob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 5px;
+}
+.pc-toggle.active .pc-toggle-knob {
+    left: auto;
+    right: 5px;
+}
+
+/* 9. Slide */
+.pc-slide-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    position: relative;
+}
+.pc-slide-fill {
+    height: 100%;
+    border-radius: 4px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.pc-slide-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 10. Input Field */
+.pc-input-field {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid;
+    font-size: 12px;
+}
+
+/* 11. Drop Down */
+.pc-dropdown {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid;
+    font-size: 12px;
+}
+
+/* 12. Text Field */
+.pc-textarea {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: 1px solid;
+    padding: 16px;
+    font-size: 12px;
+}
+
+/* --- 📍 13-19. New Components Styles --- */
+
+/* 13. Breadcrumb */
+.pc-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* 14. Segment */
+.pc-segment {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+}
+.pc-seg-item {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 15. Tab */
+.pc-tabs {
+    display: flex;
+    justify-content: space-between;
+}
+.pc-tab-item {
+    padding-bottom: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+}
+
+/* 16. Pagination */
+.pc-pagination {
+    display: flex;
+    gap: 8px;
+}
+.pc-page-item {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 17. Progress */
+.pc-progress-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.pc-prog-head {
+    display: flex;
+    justify-content: space-between;
+}
+.pc-prog-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+}
+.pc-prog-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+/* 18. Typography */
+.pc-typography {
+    text-align: left;
+    width: 100%;
+}
+.pc-typography h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+.pc-typography p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* 19. Calendar */
+.pc-calendar-card {
+    grid-column: 1 / -1; /* สั่งให้ครอบคลุมทั้ง 3 คอลัมน์ */
+    max-width: 480px; /* จำกัดความกว้างไม่ให้ใหญ่เกินไป */
+    width: 100%;
+    margin: 0 auto; /* จัดให้อยู่ตรงกลาง */
+    height: auto; /* ปลดล็อกความสูง 220px */
+}
+.pc-cal-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+.pc-cal-header span {
+    font-weight: bold;
+    font-size: 14px;
+}
+.pc-cal-arrows {
+    display: flex;
+    gap: 12px;
+}
+.pc-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px 16px;
+    width: 100%;
+    text-align: center;
+}
+.pc-cal-day {
+    font-size: 10px;
+    font-weight: bold;
+    padding-bottom: 8px;
+}
+.pc-cal-date {
+    font-size: 12px;
+    font-weight: 600;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    border-radius: 6px;
+}

@@ -396,19 +396,6 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                                             >
                                                 <Palette size={18} />
                                             </button>
-                                            {/* 📍 ปรับสี Toast ของหน้า Explore ให้เป็นสีแดงเมื่อต้องล็อกอิน */}
-                                            {toastMessage && (
-                                                <div style={{
-                                                    position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
-                                                    backgroundColor: toastMessage.includes('Please log in') ? '#ef4444' : '#111827',
-                                                    color: '#fff', padding: '10px 20px', borderRadius: '30px',
-                                                    display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999,
-                                                    border: `1px solid ${toastMessage.includes('Please log in') ? '#ef4444' : '#111827'}`
-                                                }}>
-                                                    <Info size={16} />
-                                                    {toastMessage}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -416,6 +403,30 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                         );
                     })}
                 </div>
+            )}
+            {toastMessage && (
+                <div style={{
+                    position: 'fixed', // 📍 แบบ fixed เพื่อให้ลอยเหนือทุกอย่าง
+                    bottom: '30px',    // 📍 ระยะห่างจากด้านล่าง
+                    left: '50%',       // 📍 จัดให้อยู่กึ่งกลางแนวนอน
+                    transform: 'translateX(-50%)', // 📍 ขยับตัวกลับมาครึ่งหนึ่งเพื่อให้จุดศูนย์กลางอยู่ตรงกลางจริงๆ
+                    zIndex: 9999,      // 📍 รับประกันว่าอยู่ชั้นบนสุด
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    // หากเป็นการเตือนล็อกอิน ให้ใช้สีแดง (#ef4444) หากเป็นการถูกใจ/ Error อื่นๆ ใช้สีดำ (#111827) หรือสีที่คุณตั้งไว้
+                    backgroundColor: toastMessage.includes('Please log in') ? '#ef4444' : '#111827',
+                    color: '#fff',
+                    padding: '10px 20px',
+                    borderRadius: '30px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}>
+                    <Info size={16} />
+                    {toastMessage}
+                </div>
+
             )}
         </div>
     );

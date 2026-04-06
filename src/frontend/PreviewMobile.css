@@ -1,382 +1,195 @@
-/* ไฟล์: src/frontend/PreviewComponent.css */
+/* ไฟล์: src/frontend/PreviewMobile.css */
 
-.preview-component-wrapper {
+.preview-mobile-wrapper {
     display: flex;
     justify-content: center;
-    padding: 40px;
+    align-items: center;
     width: 100%;
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden; 
+    padding: 30px; 
     box-sizing: border-box;
-    font-family: 'Inter', -apple-system, sans-serif;
 }
 
-.pc-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-/* Base Card Style */
-.pc-card {
+/* 📍 สไตล์กรอบโทรศัพท์จำลอง: ขนาด 280x600 */
+.mobile-phone-frame {
+    width: 280px; 
+    height: 600px; 
+    border-radius: 36px; 
+    border: 12px solid #222; /* กรอบมือถือ */
+    background-color: #F8FAFC; /* สีพื้นหลังแอปตามรูป (เทาอมฟ้าอ่อนๆ) */
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2); 
     display: flex;
     flex-direction: column;
-    border: 1px solid;
-    border-radius: 16px;
-    background-color: #ffffff;
-    overflow: hidden;
-    height: 220px;
+    position: relative; 
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    margin: auto; 
+    overflow: hidden; 
 }
 
-.pc-card-content {
+/* --- ภาชนะบรรจุเนื้อหาที่เลื่อนได้ --- */
+.pm-scroll-container {
     flex: 1;
+    overflow-y: scroll; 
+    scrollbar-width: none; 
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+    flex-direction: column;
+    padding-bottom: 70px; /* เผื่อที่ให้ Bottom Nav */
 }
+.pm-scroll-container::-webkit-scrollbar { display: none; }
 
-.pc-card-footer {
-    border-top: 1px solid;
-    padding: 12px;
-    text-align: center;
-    font-weight: 800;
-    font-size: 14px;
-    background-color: #ffffff;
-}
-
-/* 1. Button */
-.pc-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: 1px solid;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-/* 2. Group Profile */
-.pc-group-profile {
-    display: flex;
-    align-items: center;
-}
-.pc-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 14px;
-    margin-left: -12px;
-}
-.pc-avatar:first-child { margin-left: 0; }
-.pc-avatar-more { border: 2px solid #fff; font-size: 12px; }
-
-/* 3. Profile */
-.pc-avatar-single {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 1px solid;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-/* 4. Icon */
-.pc-icon-group {
-    display: flex;
-    gap: 16px;
-}
-.pc-icon-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    border: 1px solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #fff;
-}
-
-/* 5. Badge */
-.pc-badge {
-    padding: 8px 24px;
-    border-radius: 20px;
-    border: 1px solid;
-    font-weight: 600;
-    font-size: 12px;
-}
-
-/* 6. Radio */
-.pc-radio-group {
-    display: flex;
-    gap: 20px;
-}
-.pc-radio {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.pc-radio-inner {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-}
-
-/* 7. Checkbox */
-.pc-checkbox-group {
-    display: flex;
-    gap: 24px;
-}
-.pc-check {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* 8. Toggle */
-.pc-toggle {
-    width: 64px;
-    height: 32px;
-    border-radius: 20px;
-    position: relative;
-    box-sizing: border-box;
-}
-.pc-toggle.inactive { border: 1px solid; }
-.pc-toggle-knob {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 5px;
-}
-.pc-toggle.active .pc-toggle-knob {
-    left: auto;
-    right: 5px;
-}
-
-/* 9. Slide */
-.pc-slide-track {
-    width: 100%;
-    height: 8px;
-    border-radius: 4px;
-    position: relative;
-}
-.pc-slide-fill {
-    height: 100%;
-    border-radius: 4px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-.pc-slide-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #fff;
-    border: 2px solid;
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* 10. Input Field */
-.pc-input-field {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid;
-    font-size: 12px;
-}
-
-/* 11. Drop Down */
-.pc-dropdown {
-    width: 100%;
+/* Header */
+.pm-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid;
-    font-size: 12px;
-}
-
-/* 12. Text Field */
-.pc-textarea {
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    border: 1px solid;
     padding: 16px;
-    font-size: 12px;
+}
+.pm-user-info { display: flex; gap: 8px; align-items: center; }
+.pm-avatar { 
+    width: 28px; height: 28px; border-radius: 50%; 
+    display: flex; justify-content: center; align-items: center;
+}
+.pm-welcome { display: flex; flex-direction: column; }
+.pm-bell-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background-color: #fff;
+    display: flex; justify-content: center; align-items: center;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.pm-bell-dot {
+    position: absolute; top: 6px; right: 8px;
+    width: 4px; height: 4px; border-radius: 50%;
 }
 
-/* --- 📍 13-19. New Components Styles --- */
-
-/* 13. Breadcrumb */
-.pc-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-/* 14. Segment */
-.pc-segment {
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    border-radius: 8px;
-    gap: 4px;
-}
-.pc-seg-item {
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* 15. Tab */
-.pc-tabs {
-    display: flex;
-    justify-content: space-between;
-}
-.pc-tab-item {
-    padding-bottom: 8px;
-    font-size: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    flex: 1;
-    text-align: center;
-}
-
-/* 16. Pagination */
-.pc-pagination {
-    display: flex;
-    gap: 8px;
-}
-.pc-page-item {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* 17. Progress */
-.pc-progress-container {
-    width: 100%;
+/* 📍 Banking Balance Card */
+.pm-balance-card {
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
-.pc-prog-head {
-    display: flex;
-    justify-content: space-between;
+.pm-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.pm-trend-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 6px; border-radius: 8px;
 }
-.pc-prog-track {
-    width: 100%;
-    height: 8px;
-    border-radius: 4px;
+.pm-wallet-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; justify-content: center; align-items: center;
 }
-.pc-prog-fill {
-    height: 100%;
-    border-radius: 4px;
+.pm-card-bottom {
+    display: flex; justify-content: space-between; align-items: flex-end;
 }
-
-/* 18. Typography */
-.pc-typography {
-    text-align: left;
-    width: 100%;
-}
-.pc-typography h3 {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-}
-.pc-typography p {
-    margin: 0;
-    font-size: 11px;
-    line-height: 1.5;
+.pm-savings-info { display: flex; flex-direction: column; gap: 2px; }
+.pm-view-btn {
+    background-color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 8px; font-weight: bold;
+    cursor: pointer;
 }
 
-/* 19. Calendar */
-.pc-calendar-card {
-    grid-column: 1 / -1; /* สั่งให้ครอบคลุมทั้ง 3 คอลัมน์ */
-    max-width: 480px; /* จำกัดความกว้างไม่ให้ใหญ่เกินไป */
-    width: 100%;
-    margin: 0 auto; /* จัดให้อยู่ตรงกลาง */
-    height: auto; /* ปลดล็อกความสูง 220px */
-}
-.pc-cal-header {
-    width: 100%;
+/* 📍 Quick Actions */
+.pm-quick-actions {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    padding: 20px 16px;
 }
-.pc-cal-header span {
-    font-weight: bold;
-    font-size: 14px;
+.pm-quick-action-item {
+    display: flex; flex-direction: column; align-items: center; cursor: pointer;
 }
-.pc-cal-arrows {
+.pm-quick-icon-box {
+    width: 38px; height: 38px; border-radius: 12px;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* Section general */
+.pm-section { padding: 0 16px; margin-bottom: 16px; }
+.pm-section-head { 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 12px; 
+}
+
+/* 📍 Favorites */
+.pm-favorites-list {
     display: flex;
     gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
 }
-.pc-cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 12px 16px;
-    width: 100%;
-    text-align: center;
+.pm-favorites-list::-webkit-scrollbar { display: none; }
+.pm-favorite-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pm-fav-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
 }
-.pc-cal-day {
-    font-size: 10px;
-    font-weight: bold;
-    padding-bottom: 8px;
+
+/* 📍 Weekly Spending Card */
+.pm-spending-card {
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
-.pc-cal-date {
-    font-size: 12px;
-    font-weight: 600;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: auto;
-    border-radius: 6px;
+.pm-chart-area { margin: 16px 0; }
+.pm-bars-container {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    height: 60px;
+}
+.pm-bar-wrapper {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    height: 100%; position: relative; margin: 0 2px;
+}
+.pm-bar {
+    width: 100%; border-radius: 4px 4px 0 0;
+}
+.pm-bar-tooltip {
+    position: absolute; top: -14px; font-size: 7px; font-weight: bold;
+}
+.pm-x-axis {
+    display: flex; justify-content: space-between; margin-top: 6px; font-size: 7px; font-weight: 600;
+}
+.pm-x-axis span { flex: 1; text-align: center; }
+.pm-chart-chips { display: flex; gap: 6px; }
+.pm-chip {
+    padding: 4px 10px; border-radius: 12px; font-size: 7px; font-weight: bold; cursor: pointer;
+}
+
+/* 📍 Promo Card */
+.pm-promo-card {
+    border-radius: 12px; padding: 16px; position: relative; overflow: hidden;
+}
+.pm-promo-badge {
+    padding: 3px 6px; border-radius: 4px; font-size: 7px; font-weight: bold;
+}
+.pm-promo-icon {
+    position: absolute; right: -5px; bottom: -5px; transform: rotate(-20deg);
+}
+
+/* 📍 Bottom Navigation Bar (ตรึงอยู่กับที่ + ปุ่ม FAB ลอย) */
+.pm-bottom-nav {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 55px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-radius: 0 0 24px 24px; padding: 0 16px; box-sizing: border-box;
+    z-index: 10;
+}
+.pm-nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; flex: 1;
+}
+.pm-nav-item span { font-size: 7px; font-weight: 600; }
+
+/* 📍 Floating Action Button (FAB) ตรงกลาง */
+.pm-fab-button {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    position: relative; top: -16px; /* ยกลอยขึ้นเหนือ Navbar */
+    cursor: pointer; flex-shrink: 0;
+    border: 3px solid #F8FAFC; /* ขอบขาวจำลองการเจาะ Navbar */
 }

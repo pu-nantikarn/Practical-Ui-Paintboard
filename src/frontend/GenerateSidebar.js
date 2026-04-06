@@ -744,7 +744,7 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin, userId }) 
           onClick={() => {
             if (!userId) {
               // 📍 แสดง Toast ทันที และ "return" เพื่อไม่ให้โค้ดบรรทัดถัดไปทำงาน (หน้าต่าง Save จะไม่เด้ง)
-              setCopyFeedback('Please log in กรุณาลงชื่อเข้าใช้ก่อนบันทึกจานสีครับ');
+              setCopyFeedback('Please log in');
               setTimeout(() => setCopyFeedback(null), 3000);
               return;
             }

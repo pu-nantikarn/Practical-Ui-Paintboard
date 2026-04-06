@@ -328,7 +328,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Image Sidebar)
 // ==========================================
-const ImageSidebar =({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
+const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
     const imgRef = useRef(null);
 
     const [uploadedImage, setUploadedImage] = useState(() => {
@@ -880,7 +880,7 @@ const ImageSidebar =({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
                     onClick={() => {
                         if (!userId) {
                             // 📍 แสดง Toast ทันที และ "return" เพื่อไม่ให้โค้ดบรรทัดถัดไปทำงาน (หน้าต่าง Save จะไม่เด้ง)
-                            setCopyFeedback('Please log in กรุณาลงชื่อเข้าใช้ก่อนบันทึกจานสีครับ');
+                            setCopyFeedback('Please log in');
                             setTimeout(() => setCopyFeedback(null), 3000);
                             return;
                         }
@@ -971,12 +971,30 @@ const ImageSidebar =({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
                 paletteToEdit={paletteToEdit}
                 isUpdateMode={isEditingSavedPalette}
             />
-            {/* 📍 UI สำหรับแสดงผล Copied Feedback */}
+            {/* 📍 แก้ไขกล่องแจ้งเตือนของ ImageSidebar ให้มาอยู่กึ่งกลางหน้าจอด้านล่าง */}
             {copyFeedback && (
                 <div
                     className="copy-feedback-toast"
-                    style={copyFeedback.includes('Please log in') ? { backgroundColor: '#ef4444', color: '#fff', borderColor: '#ef4444' } : {}}
+                    style={{
+                        position: 'fixed', // 📍 เปลี่ยนเป็น fixed เพื่อให้ลอยเหนือทุกอย่าง
+                        bottom: '30px',    // 📍 ระยะห่างจากด้านล่าง
+                        left: '50%',       // 📍 จัดให้อยู่กึ่งกลางแนวนอน
+                        transform: 'translateX(-50%)', // 📍 ขยับตัวกลับมาครึ่งหนึ่งเพื่อให้จุดศูนย์กลางอยู่ตรงกลางจริงๆ
+                        zIndex: 9999,      // 📍 รับประกันว่าอยู่ชั้นบนสุด
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        // ถ้าข้อความมีคำว่า 'Please log in' ให้ใช้สีแดง (#ef4444) ถ้าไม่มีให้ใช้สีเขียว (#10b981) หรือสีที่คุณตั้งไว้ใน CSS
+                        backgroundColor: copyFeedback.includes('Please log in') ? '#ef4444' : '#10b981',
+                        color: '#fff',
+                        padding: '10px 20px',
+                        borderRadius: '30px',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    }}
                 >
+                    {/* เปลี่ยนไอคอนตามประเภทข้อความ */}
                     {copyFeedback.includes('Please log in') ? <Info size={16} /> : <CheckCircle size={16} />}
                     {copyFeedback}
                 </div>

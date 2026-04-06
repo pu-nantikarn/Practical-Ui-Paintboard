@@ -1,6 +1,6 @@
 // ไฟล์: src/frontend/GenerateSidebar.js
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, CheckCircle } from 'lucide-react';
+import { Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, CheckCircle, Info } from 'lucide-react';
 import './GenerateSidebar.css';
 import { supabase } from '../backend/supabaseClient';
 import SavePalette from '../frontend/SavePalette';
@@ -287,7 +287,8 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Generate Sidebar)
 // ==========================================
-const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
+// เปลี่ยนบรรทัดที่ประกาศฟังก์ชันให้มี userId แบบนี้ครับ
+const GenerateSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
   const moods = ['Random', 'Harmony', 'Playful', 'Earth', 'Natural', 'Minimal', 'Luxury', 'Midnight', 'Warm', 'Cool', 'Pastel', 'Retro', 'Neon', 'Forest', 'Dreamy', 'Sunset'];
 
   const { genPrimary: primary, setGenPrimary: setPrimary, genSecondary: secondary, setGenSecondary: setSecondary } = useContext(ColorContext);
@@ -304,11 +305,11 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
 
   // โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
   // 📍 โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
- // 📍 โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
+  // 📍 โหลดข้อมูลจานสีที่เลือกมาใส่ Slots 
   useEffect(() => {
     if (paletteToEdit) {
       const details = paletteToEdit.paletteDetail || [];
-      
+
       let sortedColors = details.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
       if (sortedColors.length > 0) {
@@ -317,32 +318,32 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
 
         let mainColors = [];
         let dbNeutrals = []; // 📍 1. สร้างตัวแปรมารับสีขยะ/สี Neutral
-        
+
         for (let i = 0; i < sortedColors.length; i++) {
-            const detail = sortedColors[i];
-            const hex = detail.color?.hex_value?.replace('#', '').toUpperCase();
-            
-            // กฎข้อ 1: ถ้าเป็น Neutral (role_id = 3) ให้จับโยนเข้า dbNeutrals
-            if (String(detail.role_id) === '3') {
-                dbNeutrals.push(hex);
-                continue;
-            }
+          const detail = sortedColors[i];
+          const hex = detail.color?.hex_value?.replace('#', '').toUpperCase();
 
-            // กฎข้อ 2: ถ้าเจอสีที่หน้าตาเหมือน Neutral ให้หยุดดึงเข้า Main แล้วโกยที่เหลือลง Neutral ให้หมด
-            if (i > 0 && (hex === autoNeutrals[0] || hex === autoNeutrals[1] || hex === autoNeutrals[2])) {
-                dbNeutrals.push(hex);
-                for (let j = i + 1; j < sortedColors.length; j++) {
-                    dbNeutrals.push(sortedColors[j].color?.hex_value?.replace('#', '').toUpperCase());
-                }
-                break; 
-            }
+          // กฎข้อ 1: ถ้าเป็น Neutral (role_id = 3) ให้จับโยนเข้า dbNeutrals
+          if (String(detail.role_id) === '3') {
+            dbNeutrals.push(hex);
+            continue;
+          }
 
-            // กฎข้อ 3: ใส่สีเข้า Main แต่ถ้าเกิน 6 สี ให้ปัดไปอยู่ Neutral แทน
-            if (mainColors.length < 6) {
-                mainColors.push(detail);
-            } else {
-                dbNeutrals.push(hex);
+          // กฎข้อ 2: ถ้าเจอสีที่หน้าตาเหมือน Neutral ให้หยุดดึงเข้า Main แล้วโกยที่เหลือลง Neutral ให้หมด
+          if (i > 0 && (hex === autoNeutrals[0] || hex === autoNeutrals[1] || hex === autoNeutrals[2])) {
+            dbNeutrals.push(hex);
+            for (let j = i + 1; j < sortedColors.length; j++) {
+              dbNeutrals.push(sortedColors[j].color?.hex_value?.replace('#', '').toUpperCase());
             }
+            break;
+          }
+
+          // กฎข้อ 3: ใส่สีเข้า Main แต่ถ้าเกิน 6 สี ให้ปัดไปอยู่ Neutral แทน
+          if (mainColors.length < 6) {
+            mainColors.push(detail);
+          } else {
+            dbNeutrals.push(hex);
+          }
         }
 
         // 2. อัปเดตช่อง Primary
@@ -488,13 +489,6 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
   };
 
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
-    });
-  }, []);
 
   const currentColors = [
     primary.value,
@@ -546,6 +540,7 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
       console.error('Failed to copy!', err);
     });
   };
+
 
   // 📍 State และฟังก์ชันสำหรับ Modal ของ Admin (เพิ่มใหม่)
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -599,18 +594,18 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
         .single();
       if (paletteError) throw paletteError;
 
-     // 2. ตรวจสอบและบันทึกสี
+      // 2. ตรวจสอบและบันทึกสี
       for (let i = 0; i < currentColors.length; i++) {
         const hex = currentColors[i].toUpperCase();
         let color_id;
-        
+
         // 📍 1. เปลี่ยนจาก .single() เป็น .maybeSingle() เพื่อไม่ให้เกิด Error 406 เวลาหาสีไม่เจอ
         const { data: existingColor } = await supabase
           .from('color')
           .select('color_id')
           .eq('hex_value', hex)
-          .maybeSingle(); 
-        
+          .maybeSingle();
+
         if (existingColor) {
           color_id = existingColor.color_id;
         } else {
@@ -620,7 +615,7 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
 
           const { data: insertedColor, error: colorError } = await supabase
             .from('color')
-            .insert([{ 
+            .insert([{
               hex_value: hex,
               r_value: r,
               g_value: g,
@@ -631,7 +626,7 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
             }])
             .select('color_id')
             .single();
-            
+
           if (colorError) throw colorError;
           color_id = insertedColor.color_id;
         }
@@ -743,8 +738,22 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
       </div>
 
       <div className="bottom-action-group">
-        <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
-        
+        {/* 📍 ปรับปุ่ม Save Palette ให้ดัก userId ตั้งแต่คลิกครั้งแรก */}
+        <button
+          className="save-palette-btn"
+          onClick={() => {
+            if (!userId) {
+              // 📍 แสดง Toast ทันที และ "return" เพื่อไม่ให้โค้ดบรรทัดถัดไปทำงาน (หน้าต่าง Save จะไม่เด้ง)
+              setCopyFeedback('Please log in กรุณาลงชื่อเข้าใช้ก่อนบันทึกจานสีครับ');
+              setTimeout(() => setCopyFeedback(null), 3000);
+              return;
+            }
+            setIsSaveModalOpen(true);
+          }}
+        >
+          Save Palette
+        </button>
+
         {isAdmin && !isEditingSavedPalette && currentColors.length > 0 && (
           <button className="admin-add-template-btn" onClick={() => setIsTemplateModalOpen(true)}>
             <Plus size={16} /> Add Template
@@ -798,8 +807,11 @@ const GenerateSidebar = ({ paletteToEdit, onExitEditingMode,isAdmin }) => {
         isUpdateMode={isEditingSavedPalette}
       />
       {copyFeedback && (
-        <div className="copy-feedback-toast">
-          <CheckCircle size={16} />
+        <div
+          className="copy-feedback-toast"
+          style={copyFeedback.includes('Please log in') ? { backgroundColor: '#ef4444', color: '#fff', borderColor: '#ef4444' } : {}}
+        >
+          {copyFeedback.includes('Please log in') ? <Info size={16} /> : <CheckCircle size={16} />}
           {copyFeedback}
         </div>
       )}

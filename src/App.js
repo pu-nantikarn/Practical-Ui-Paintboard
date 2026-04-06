@@ -28,11 +28,11 @@ function App() {
   const [previewMode, setPreviewMode] = useState('Dashboard');
 
   // 📍 1. โค้ดดึงข้อมูล User และสถานะ Admin ที่แก้ไขให้ถูกต้อง 100%
+  // 📍 1. โค้ดดึงข้อมูล User และสถานะ Admin ที่แก้ไขให้คอยดักจับการล็อกเอาท์
+  // 📍 1. โค้ดดึงข้อมูล User และสถานะ Admin ที่แก้ไขให้คอยดักจับการล็อกเอาท์
   useEffect(() => {
-    const checkUserAndAdminStatus = async () => {
+    const checkUserAndAdminStatus = async (user) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
         setUserId(user?.id || null);
 
         if (user) {
@@ -42,7 +42,6 @@ function App() {
             .eq('user_id', user.id)
             .single();
 
-          // 📍 นำตัวแปร error มาใช้งาน (ถ้าดึงข้อมูลไม่สำเร็จให้โชว์แจ้งเตือนใน Console)
           if (error) {
             console.error("Error fetching admin status:", error);
           }
@@ -61,7 +60,28 @@ function App() {
       }
     };
 
-    checkUserAndAdminStatus();
+    // เช็คสถานะตอนโหลดเว็บครั้งแรก
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkUserAndAdminStatus(session?.user);
+    });
+
+    // 📍 คอยดักจับเหตุการณ์ ล็อกอิน / ล็อกเอาท์ แบบเรียลไทม์
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // 📍 ลบคำสั่ง window.location.reload(); ออกจากตรงนี้
+        setUserId(null);
+        setIsAdmin(false);
+      } else if (!session) {
+        setUserId(null);
+        setIsAdmin(false);
+      } else {
+        checkUserAndAdminStatus(session?.user);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // บันทึก Tab ล่าสุด
@@ -113,6 +133,7 @@ function App() {
               paletteToEdit={selectedSavedPalette}
               onExitEditingMode={() => setSelectedSavedPalette(null)}
               isAdmin={isAdmin}
+              userId={userId}
             />
           ) : (
             <ImageSidebar
@@ -120,6 +141,7 @@ function App() {
               paletteToEdit={selectedSavedPalette}
               onExitEditingMode={() => setSelectedSavedPalette(null)}
               isAdmin={isAdmin}
+              userId={userId}
             />
           )}
 

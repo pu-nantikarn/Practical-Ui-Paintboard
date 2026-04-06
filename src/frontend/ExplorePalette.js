@@ -1,6 +1,6 @@
 // ไฟล์: src/frontend/ExplorePalette.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Heart, X, ChevronDown, Edit, Trash2, Palette } from 'lucide-react'; // 📍 นำเข้า FolderPlus และ Copy เพิ่ม
+import { Search, Heart, X, ChevronDown, Edit, Trash2, Palette, Info } from 'lucide-react'; // 📍 นำเข้า FolderPlus และ Copy เพิ่ม
 import { supabase } from '../backend/supabaseClient';
 import './ExplorePalette.css';
 
@@ -13,9 +13,10 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
     const [selectedMoods, setSelectedMoods] = useState([]);
     const [moodOptions, setMoodOptions] = useState([]);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [toastMessage, setToastMessage] = useState(null);
 
     // 📍 1. ปรับคำสั่ง SQL: ดึง likes_count และเช็คว่า user นี้กดถูกใจหรือยัง
-   const fetchExplorePalettes = useCallback(async () => {
+    const fetchExplorePalettes = useCallback(async () => {
         setLoading(true);
         try {
             // 📍 แก้ไขตรงนี้: ดึงข้อมูลที่จำเป็นสำหรับการ Copy ให้ครบถ้วน!
@@ -52,7 +53,7 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
         const handleRefresh = () => {
             fetchExplorePalettes();
         };
-        
+
         // เปิดการรับฟัง
         window.addEventListener('refreshExplore', handleRefresh);
 
@@ -108,13 +109,13 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
     // 📍 3. ฟังก์ชันจัดการระบบ Like/Dislike แบบ Dynamic
     const handleLikePalette = async (palette, currentLikes) => {
         if (!userId) {
-            alert('กรุณาลงชื่อเข้าใช้ก่อนกดถูกใจจานสีครับ');
+            setToastMessage('Please log in');
+            setTimeout(() => setToastMessage(null), 3000);
             return;
         }
-
         const paletteId = palette.palette_id;
-        const localLikesKey = `hasLiked_u${userId}_p${paletteId}`;
-        const alreadyLiked = localStorage.getItem(localLikesKey) === 'true';
+        const localLikesKey = userId ? `hasLiked_u${userId}_p${palette.palette_id}` : null;
+        const alreadyLiked = localLikesKey ? localStorage.getItem(localLikesKey) === 'true' : false;
 
         try {
             let newLikesCount;
@@ -124,14 +125,14 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                 // 💔 กรณี Unlike (เอาออกจาก Favorite)
                 // ==========================================
                 newLikesCount = Math.max(0, currentLikes - 1);
-                
+
                 const { error: deleteError } = await supabase
                     .from('palette')
                     .delete()
                     .eq('user_id', userId)
                     .eq('is_favorite', true)
                     // 📍 ลบตัวที่อ้างอิงถึง palette_id ต้นฉบับ (ถ้าคุณมีคอลัมน์ parent_id จะดีมาก แต่ถ้าไม่มีให้ใช้ชื่อ)
-                    .ilike('palette_name', `${palette.palette_name}%(Favorite)`); 
+                    .ilike('palette_name', `${palette.palette_name}%(Favorite)`);
 
                 if (deleteError) throw deleteError;
                 localStorage.removeItem(localLikesKey);
@@ -147,16 +148,16 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                     .from('palette')
                     .insert([{
                         // 📍 ปรับชื่อให้มี Timestamp เล็กน้อยเพื่อเลี่ยง Error 409 (Conflict)
-                        palette_name: `${palette.palette_name} (Favorite)`, 
+                        palette_name: `${palette.palette_name} (Favorite)`,
                         user_id: userId,
                         mood_id: palette.moodtone?.mood_id || 1,
-                        source_id: 2, 
+                        source_id: 2,
                         is_public: false,
                         is_template: false,
                         is_favorite: true,
                         likes_count: 0,
                         // 📍 แก้ปัญหา Foreign Key: บังคับให้เป็น null เสมอเพราะเราลากเข้า Fav เอง
-                        collection_id: null 
+                        collection_id: null
                     }])
                     .select('palette_id')
                     .single();
@@ -191,17 +192,14 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
 
         } catch (error) {
             console.error("Error toggling favorite:", error);
-            // ถ้าติด Error 409 อีก ให้แจ้งผู้ใช้ว่าอาจจะเคยเพิ่มไปแล้ว
-            if (error.code === '23505') {
-                alert("จานสีนี้อยู่ในรายการโปรดของคุณอยู่แล้วครับ");
-            } else {
-                alert(`เกิดข้อผิดพลาด: ${error.message}`);
-            }
+            // 📍 เปลี่ยน alert เป็น setToastMessage
+            setToastMessage(`เกิดข้อผิดพลาด: ${error.message}`);
+            setTimeout(() => setToastMessage(null), 3000);
         }
     };
 
     const handlePreviewPalette = (palette, e) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         if (onSelectPalette) {
             // จัดรูปแบบข้อมูลให้ตรงกับที่ Sidebar ต้องการ
             const formattedPalette = {
@@ -209,8 +207,8 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                 colors: (palette.paletteDetail || [])
                     .sort((a, b) => a.order_index - b.order_index)
                     .map(detail => ({
-                        ...detail.color, 
-                        role_id: detail.role_id 
+                        ...detail.color,
+                        role_id: detail.role_id
                     })),
                 moodtone: palette.moodtone?.mood_name || 'Random',
                 sourcetype: palette.sourcetype?.source_name || 'Explore'
@@ -274,8 +272,8 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                 </div>
 
                 {isAdmin && (
-                    <button 
-                        className={`edit-template-btn ${isEditMode ? 'active' : ''}`} 
+                    <button
+                        className={`edit-template-btn ${isEditMode ? 'active' : ''}`}
                         onClick={() => setIsEditMode(!isEditMode)}
                         title="จัดการจานสีของระบบ"
                     >
@@ -313,16 +311,16 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                         }
 
                         const moodName = palette.moodtone?.mood_name || 'Random';
-                        
+
                         // เช็คว่า User เคยกดถูกใจพาเลตนี้หรือยัง
                         const localLikesKey = `hasLiked_u${userId}_p${palette.palette_id}`;
                         const alreadyLiked = localStorage.getItem(localLikesKey) === 'true';
 
                         return (
                             <div key={palette.palette_id} className={`explore-card ${isEditMode && palette.is_template ? 'edit-mode-active' : ''}`}>
-                                
+
                                 {isEditMode && palette.is_template && (
-                                    <button 
+                                    <button
                                         className="delete-template-overlay-btn"
                                         onClick={() => handleDeleteTemplate(palette.palette_id, palette.palette_name)}
                                         title="ลบจานสีระบบ"
@@ -330,27 +328,34 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
                                         <Trash2 size={18} />
                                     </button>
                                 )}
-
                                 <div className="explore-colors">
-                                    {/* 📍 2. นำสีมากางออก โดยดักจับบั๊ก # เบิ้ล */}
-                                    {displayColors.map((detail, index) => {
-                                        const rawHex = detail.color?.hex_value || 'CCCCCC';
-                                        const bgColor = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
+                                    {/* 📍 2. ดักจับ: ถ้าไม่มีข้อมูลสี (เช่นติด RLS) ให้แสดงข้อความแทน */}
+                                    {displayColors.length > 0 ? (
+                                        displayColors.map((detail, index) => {
+                                            const rawHex = detail.color?.hex_value || 'CCCCCC';
+                                            const bgColor = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
 
-                                        return (
-                                            <div
-                                                key={detail.detail_id || index}
-                                                className="explore-color-stripe"
-                                                style={{ backgroundColor: bgColor }}
-                                            />
-                                        );
-                                    })}
+                                            return (
+                                                <div
+                                                    key={detail.detail_id || index}
+                                                    className="explore-color-stripe"
+                                                    style={{ backgroundColor: bgColor }}
+                                                />
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6', color: '#9ca3af', fontSize: '12px' }}>
+                                            <span title="โปรดตั้งค่าสิทธิ์ RLS ใน Supabase ให้ Public ดึงข้อมูล color และ paletteDetail ได้">
+                                                🔒 ไม่มีข้อมูลสี / ติดสิทธิ์ RLS
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ข้อมูลด้านล่างการ์ด (Explore-info เหมือนเดิม) */}
                                 <div className="explore-info">
                                     <div className="explore-text">
-                                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <h4>{palette.palette_name || 'Untitled Palette'}</h4>
                                         </div>
                                         <p>Mood & Tone : {moodName}</p>
@@ -358,7 +363,7 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
 
                                     {/* 📍 ปรับโครงสร้าง: ย้าย Template Tag และปุ่มมาไว้ตรงนี้ */}
                                     <div className="explore-card-actions">
-                                        
+
                                         {/* 📍 ย้าย Badge มาแสดงด้านบน */}
                                         {palette.is_template && (
                                             <span className="template-badge">Template</span>
@@ -366,31 +371,44 @@ const ExplorePalette = ({ isAdmin, userId, onSelectPalette }) => {
 
                                         <div className="explore-likes-group">
                                             {/* 📍 ปุ่ม Like ปรับคำสั่ง onClick เรียก handleLikePalette */}
-                                            <button 
-                                                className="like-btn" 
+                                            <button
+                                                className="like-btn"
                                                 onClick={() => handleLikePalette(palette, palette.likes_count || 0)}
                                                 title={alreadyLiked ? "ยกเลิกกดใจ" : "กดใจ"}
                                             >
                                                 {/* 📍 เปลี่ยนหัวใจเป็นสีแดงถ้าเคยกดชอบ */}
-                                                <Heart 
-                                                    size={18} 
+                                                <Heart
+                                                    size={18}
                                                     color={alreadyLiked ? "#e11d48" : "#111827"}
                                                     fill={alreadyLiked ? "#e11d48" : "none"}
-                                                    style={{transition: 'all 0.2s'}}
+                                                    style={{ transition: 'all 0.2s' }}
                                                 />
                                             </button>
-                                            
+
                                             {/* 📍 ตัวเลข likecount จริงจาก DB */}
                                             <span>{palette.likes_count || 0}</span>
 
                                             {/* 📍 เปลี่ยนปุ่มนี้เป็นปุ่มส่งเข้า Sidebar */}
-                                            <button 
-                                                className="preview-palette-btn" 
+                                            <button
+                                                className="preview-palette-btn"
                                                 onClick={(e) => handlePreviewPalette(palette, e)}
                                                 title='ดูจานสีนี้บน Workspace (แสดงบน Sidebar)'
                                             >
                                                 <Palette size={18} />
                                             </button>
+                                            {/* 📍 ปรับสี Toast ของหน้า Explore ให้เป็นสีแดงเมื่อต้องล็อกอิน */}
+                                            {toastMessage && (
+                                                <div style={{
+                                                    position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+                                                    backgroundColor: toastMessage.includes('Please log in') ? '#ef4444' : '#111827',
+                                                    color: '#fff', padding: '10px 20px', borderRadius: '30px',
+                                                    display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999,
+                                                    border: `1px solid ${toastMessage.includes('Please log in') ? '#ef4444' : '#111827'}`
+                                                }}>
+                                                    <Info size={16} />
+                                                    {toastMessage}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

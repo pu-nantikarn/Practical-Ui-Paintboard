@@ -104,13 +104,22 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette, isExploreMode, setIsEx
         // TODO: ใส่ Logic เพิ่มเติมที่นี่ เช่น การล้างจานสีสาธารณะออกจากPreview
     };
 
-    const handleLogout = async () => {
-        if (window.confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
-            await supabase.auth.signOut();
-            setIsDropdownOpen(false);
-        }
-    };
+    // 📍 ลบคำว่า async ออกไปเลย เราจะไม่รออะไรทั้งนั้น
+    const handleLogout = () => {
+        // 1. ปิด Dropdown
+        setIsDropdownOpen(false);
 
+        // 2. ลบ Token ทุกอย่างในเครื่อง
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+
+        // 3. สั่ง Logout
+        supabase.auth.signOut();
+
+        // 4. รีเฟรชหน้าต่างทันที
+        window.location.href = '/';
+    };
     return (
         <>
             <nav className="navbar">

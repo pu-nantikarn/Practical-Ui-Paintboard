@@ -180,7 +180,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
 
                 {/* 9. Slide */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
-                    <div className="pc-card-content" style={{ padding: '0 24px' }}>
+                    <div className="pc-card-content" style={{ padding: '0 32px' }}>
                         <div className="pc-slide-track" style={{ backgroundColor: neutral[2] }}>
                             <div className="pc-slide-fill" style={{ backgroundColor: pColor, width: '70%' }}></div>
                             <div className="pc-slide-thumb" style={{ borderColor: pColor, left: '70%' }}></div>
@@ -191,7 +191,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
 
                 {/* 10. Input Field */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
-                    <div className="pc-card-content" style={{ padding: '0 16px' }}>
+                    <div className="pc-card-content" style={{ padding: '0 24px' }}>
                         <div className="pc-input-field" style={{ borderColor: pColor, backgroundColor: `${pColor}15` }}>
                             <Search size={14} color={pColor} />
                             <span style={{ color: pColor }}>Type to search...</span>
@@ -202,7 +202,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
 
                 {/* 11. Drop Down */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
-                    <div className="pc-card-content" style={{ padding: '0 16px' }}>
+                    <div className="pc-card-content" style={{ padding: '0 24px' }}>
                         <div className="pc-dropdown" style={{ borderColor: pColor, backgroundColor: `${pColor}15` }}>
                             <span style={{ color: pColor }}>Drop down</span>
                             <ChevronDown size={16} color={pColor} />
@@ -211,9 +211,9 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
                     <div className="pc-card-footer" style={{ borderColor: borderColor, color: textMain }}>Drop Down</div>
                 </div>
 
-                {/* 12. Text Field */}
+                {/* 12. Text Field (📍 ปรับ alignItems เป็น stretch เพื่อให้กล่องพอดีพื้นที่) */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
-                    <div className="pc-card-content" style={{ padding: '16px' }}>
+                    <div className="pc-card-content" style={{ padding: '24px', alignItems: 'stretch' }}>
                         <div className="pc-textarea" style={{ borderColor: borderColor, backgroundColor: neutral[1] }}>
                             <span style={{ color: textMuted }}>Lorem Ipsum ...</span>
                         </div>
@@ -221,7 +221,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
                     <div className="pc-card-footer" style={{ borderColor: borderColor, color: textMain }}>Text Field</div>
                 </div>
 
-                {/* --- 📍 Components ที่เพิ่มใหม่ --- */}
+                {/* --- Components ที่เพิ่มใหม่ --- */}
 
                 {/* 13. Breadcrumb */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
@@ -278,7 +278,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
 
                 {/* 17. Progress */}
                 <div className="pc-card" style={{ borderColor: borderColor }}>
-                    <div className="pc-card-content" style={{ width: '100%', padding: '0 32px' }}>
+                    <div className="pc-card-content" style={{ padding: '0 32px' }}>
                         <div className="pc-progress-container">
                             <div className="pc-prog-head">
                                 <span style={{ color: textMuted, fontSize: '10px', fontWeight: 'bold' }}>UPLOADING</span>
@@ -316,7 +316,7 @@ const PreviewComponent = ({ mode = 'Generate' }) => {
                         </div>
 
                         <div className="pc-cal-grid">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                            {['S', 'M', 'T', 'W', 'TH', 'F', 'SA'].map(day => (
                                 <div key={day} className="pc-cal-day" style={{ color: sColors[0] || pColor }}>{day}</div>
                             ))}
                             <div className="pc-cal-date muted" style={{ color: neutral[3] }}>29</div>

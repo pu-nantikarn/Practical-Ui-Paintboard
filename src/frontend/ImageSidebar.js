@@ -1,7 +1,7 @@
 // ไฟล์: src/frontend/ImageSidebar.js
 import React, { useState, useEffect, useRef, useContext } from 'react';
 // 📍 เอา colorthief ออก เพราะเราจะใช้อัลกอริทึม Clustering ของเราเอง
-import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle, CheckCircle } from 'lucide-react';
+import { Image as ImageIcon, Lock, Unlock, Minus, Plus, Palette, Pipette, Copy, PanelRightClose, PanelRightOpen, X, Shuffle, CheckCircle, Info } from 'lucide-react';
 import { ColorContext } from '../contexts/ColorContext';
 
 // นำเข้า CSS และ Component Modal
@@ -328,7 +328,7 @@ const FloatingGradient = ({ baseHex, onCopy }) => (
 // ==========================================
 // 🎨 Component หลัก (Image Sidebar)
 // ==========================================
-const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin }) => {
+const ImageSidebar =({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => {
     const imgRef = useRef(null);
 
     const [uploadedImage, setUploadedImage] = useState(() => {
@@ -415,14 +415,6 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin }) => {
     // 📍 2. เพิ่ม State สำหรับเก็บสีทั้งหมดที่ดูดได้ และไว้เปิด/ปิดหน้าต่างย่อย
     const [allExtractedColors, setAllExtractedColors] = useState([]);
     const [showAllColorsPanel, setShowAllColorsPanel] = useState(false);
-
-    const [userId, setUserId] = useState(null);
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUserId(session?.user?.id || null);
-        });
-    }, []);
-
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
     const currentColors = [
@@ -882,7 +874,21 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin }) => {
             </div>
 
             <div className="bottom-action-group">
-                <button className="save-palette-btn" onClick={() => setIsSaveModalOpen(true)}>Save Palette</button>
+                {/* 📍 ปรับปุ่ม Save Palette ให้ดัก userId ตั้งแต่คลิกครั้งแรก */}
+                <button
+                    className="save-palette-btn"
+                    onClick={() => {
+                        if (!userId) {
+                            // 📍 แสดง Toast ทันที และ "return" เพื่อไม่ให้โค้ดบรรทัดถัดไปทำงาน (หน้าต่าง Save จะไม่เด้ง)
+                            setCopyFeedback('Please log in กรุณาลงชื่อเข้าใช้ก่อนบันทึกจานสีครับ');
+                            setTimeout(() => setCopyFeedback(null), 3000);
+                            return;
+                        }
+                        setIsSaveModalOpen(true);
+                    }}
+                >
+                    Save Palette
+                </button>
 
                 {isAdmin && !isEditingSavedPalette && currentColors.length > 0 && (
                     <button className="admin-add-template-btn" onClick={() => setIsTemplateModalOpen(true)}>
@@ -967,8 +973,11 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin }) => {
             />
             {/* 📍 UI สำหรับแสดงผล Copied Feedback */}
             {copyFeedback && (
-                <div className="copy-feedback-toast">
-                    <CheckCircle size={16} />
+                <div
+                    className="copy-feedback-toast"
+                    style={copyFeedback.includes('Please log in') ? { backgroundColor: '#ef4444', color: '#fff', borderColor: '#ef4444' } : {}}
+                >
+                    {copyFeedback.includes('Please log in') ? <Info size={16} /> : <CheckCircle size={16} />}
                     {copyFeedback}
                 </div>
             )}

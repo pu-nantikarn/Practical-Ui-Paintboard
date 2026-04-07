@@ -6,24 +6,24 @@
   display: flex;
   flex-direction: column;
   width: 400px;
-  
+
   /* 📍 เปลี่ยนตรงนี้จาก 100vh กลับมาเป็น 100% ครับ */
-  height: 100%; 
-  
-  background-color: #ffffff;
-  border-right: 1px solid #d6d6d6;
+  height: 100%;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
   padding: 16px;
   box-sizing: border-box;
   overflow: hidden;
   font-family: system-ui, sans-serif;
   gap: 16px;
 }
+
 /* ส่วนหัวข้อ */
 .section-title {
   font-size: 0.85rem;
   font-weight: 600;
   margin: 0 0 8px 0;
-  color: #1f2937;
+  color: var(--text-main);
 }
 
 /* ---------------------------
@@ -32,7 +32,8 @@
 .mood-section {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0; /* ห้ามหด */
+  flex-shrink: 0;
+  /* ห้ามหด */
 }
 
 .mood-grid {
@@ -43,19 +44,25 @@
 }
 
 .mood-btn {
-  background-color: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   padding: 6px 0;
   font-size: 0.75rem;
   cursor: pointer;
-  color: #4b5563;
+  background-color: var(--bg-main);
+  color: var(--text-muted);
+}
+
+.mood-btn:hover {
+  background-color: var(--hover-bg);
+  /* 📍 ใช้ตัวแปรสี */
 }
 
 .mood-btn.active {
-  background-color: #d1d5db;
+  background-color: var(--text-main);
+  /* 📍 สีเด่นตามโหมด */
+  color: var(--bg-surface);
   font-weight: 600;
-  color: #1f2937;
   border-color: #d1d5db;
 }
 
@@ -90,22 +97,28 @@
 .palette-section {
   display: flex;
   flex-direction: column;
-  flex: 1; /* ดันให้กินพื้นที่ที่เหลือทั้งหมด */
-  min-height: 0; /* 📍 โค้ดพระเอก: บังคับให้เกิด Scrollbar ไม่ทะลุจอ */
-  overflow-y: auto; /* 📍 โค้ดพระเอก: เปิดโหมด Scroll */
+  flex: 1;
+  /* ดันให้กินพื้นที่ที่เหลือทั้งหมด */
+  min-height: 0;
+  /* 📍 โค้ดพระเอก: บังคับให้เกิด Scrollbar ไม่ทะลุจอ */
+  overflow-y: auto;
+  /* 📍 โค้ดพระเอก: เปิดโหมด Scroll */
   gap: 16px;
-  padding-right: 4px; /* เว้นที่ให้ Scrollbar ไม่ทับเนื้อหา */
+  padding-right: 4px;
+  /* เว้นที่ให้ Scrollbar ไม่ทับเนื้อหา */
 }
 
 /* แต่ง Scrollbar ให้ดูดี */
 .palette-section::-webkit-scrollbar {
   width: 6px;
 }
+
 .palette-section::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .palette-section::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
+  background-color: var(--border-color);
   border-radius: 4px;
 }
 
@@ -127,12 +140,13 @@
   align-items: center;
   width: 100%;
   height: 36px;
-  background-color: #e5e7eb;
-  border: 1px solid #d1d5db;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   overflow: visible;
   box-sizing: border-box;
   padding: 0 6px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .color-circle-btn {
@@ -154,7 +168,9 @@
   margin-left: 8px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-muted);
+  /* 📍 เปลี่ยนเป็นตัวแปร */
+  transition: color 0.3s ease;
 }
 
 .input-wrapper input {
@@ -167,12 +183,13 @@
   font-size: 0.9rem;
   font-weight: 500;
   outline: none;
-  color: #1f2937;
+  color: var(--text-main);
   text-transform: uppercase;
+  transition: color 0.3s ease;
 }
 
 .input-wrapper input.locked-input {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .action-group {
@@ -186,32 +203,35 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-muted);
   padding: 4px;
   border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .action-icon:hover {
-  background-color: #d1d5db;
-  color: #000;
+  background-color: var(--border-color);
+  color: var(--text-main);
 }
 
 /* ช่องเส้นประ (Dashed Add Slot) */
 .dashed-add-slot {
   height: 32px;
-  border: 1.5px dashed #d1d5db;
-  background-color: #f9fafb;
+  border: 1.5px dashed var(--border-color);
+  background-color: transparent;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
 }
 
 .dashed-add-slot:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--hover-bg) !important;
+  border-color: var(--text-main) !important;
+  color: var(--text-main) !important;
 }
 
 /* Neutral Boxes */
@@ -223,9 +243,10 @@
 .neutral-box {
   width: 24px;
   height: 34px;
-  border: 1px solid #9ca3af;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   box-sizing: border-box;
+  transition: border-color 0.3s ease;
 }
 
 /* ---------------------------
@@ -234,21 +255,23 @@
 .save-palette-btn {
   width: 100%;
   padding: 10px 0;
-  background-color: #f8f9fa;
-  border: 1px solid #d1d5db;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  
+
   /* 📍 โค้ดสำหรับล็อกปุ่มให้อยู่ล่างสุดเสมอ */
-  margin-top: auto; 
-  flex-shrink: 0; 
+  margin-top: auto;
+  flex-shrink: 0;
   /* ลบ position: sticky ออกไป เพราะใช้ Flexbox แทนแล้ว */
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .save-palette-btn:hover {
-  background-color: #e5e7eb;
+  background-color: var(--hover-bg);
 }
 
 /* ---------------------------
@@ -387,7 +410,7 @@
 .picker-popover {
   display: flex;
   gap: 12px;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .picker-left {
@@ -574,7 +597,8 @@ input[type=range].slider::-moz-range-thumb {
   width: 100%;
 }
 
-.single-input, .multi-inputs {
+.single-input,
+.multi-inputs {
   display: flex;
   width: 100%;
 }
@@ -585,12 +609,12 @@ input[type=range].slider::-moz-range-thumb {
 
 .picker-inputs input {
   width: 100%;
-  height: 28px; 
+  height: 28px;
   padding: 0 6px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.75rem;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   color: #4b5563;
   text-align: center;
 }
@@ -601,9 +625,9 @@ input[type=range].slider::-moz-range-thumb {
 }
 
 .multi-inputs input {
-  flex: 1; 
-  width: auto; 
-  min-width: 0; 
+  flex: 1;
+  width: auto;
+  min-width: 0;
   -moz-appearance: textfield;
 }
 
@@ -671,118 +695,133 @@ input[type=range].slider::-moz-range-thumb {
    📍 Toast Notification สำหรับการ Copy สี
 ========================================== */
 .copy-feedback-toast {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #10B981; /* สีเขียว Success */
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    animation: fadeInUp 0.3s ease-out forwards;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #10B981;
+  /* สีเขียว Success */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: fadeInUp 0.3s ease-out forwards;
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 10px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
+
 /* ส่วนหัวเมื่ออยู่ในโหมดแก้ไขจานสี (Edit Mode Header) */
 .edit-mode-header {
-    padding: 16px 16px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 12px;
-    margin-bottom: 16px;
+  padding: 16px 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  transition: border-color 0.3s ease;
 }
 
 .edit-mode-info {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .edit-mode-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-    font-weight: bold;
-    text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
 }
 
 .edit-mode-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #111827;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main); 
+  
+  transition: color 0.3s ease;
 }
 
 .exit-edit-btn {
-    font-size: 0.8rem;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: #f3f4f6;
-    border: 1px solid #d1d5db;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--hover-bg); 
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .exit-edit-btn:hover {
-    background: #e5e7eb;
+  background: var(--border-color);
 }
 
 /* ปรับปรุงพื้นที่ว่าง (Empty Slot) ใน Secondary */
 .dashed-add-slot {
-    /* ... โค้ดเดิมที่มีอยู่ ... */
-    transition: all 0.2s;
+  /* ... โค้ดเดิมที่มีอยู่ ... */
+  transition: all 0.2s;
 }
 
-.dashed-add-slot:hover {
-    background-color: #f3f4f6;
-    border-color: #9ca3af;
-}
 
 /* =========================================
    📍 Admin Add Template Button & Wrapper
    ========================================= */
 .bottom-action-group {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    margin-top: auto; /* รับช่วงต่อ margin-top: auto จากปุ่มเดิม */
-    flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  /* รับช่วงต่อ margin-top: auto จากปุ่มเดิม */
+  flex-shrink: 0;
 }
+
 .bottom-action-group .save-palette-btn {
-    margin-top: 0; /* เอา auto ออกจากปุ่มเดิม */
-    flex: 1;
+  margin-top: 0;
+  /* เอา auto ออกจากปุ่มเดิม */
+  flex: 1;
 }
+
 .admin-add-template-btn {
-    flex: 1;
-    padding: 10px 0;
-    background-color: #374151;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: background-color 0.2s;
+  flex: 1;
+  padding: 10px 0;
+  background-color: var(--text-main);
+  color: var(--bg-surface);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease, opacity 0.2s ease;
 }
-.admin-add-template-btn:hover { background-color: #1f2937; }
-.admin-add-template-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin-add-template-btn:hover {
+  background-color: #1f2937;
+}
+
+.admin-add-template-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

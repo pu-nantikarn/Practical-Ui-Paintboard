@@ -1,9 +1,50 @@
 /* ไฟล์: src/App.css */
+/* 📍 ไปวางไว้บนสุดของไฟล์ src/App.css */
 
+/* 🌕 โหมดสว่าง (Light Mode) */
+:root {
+  --bg-main: #f3f4f6;
+  /* สีพื้นหลังเว็บ (เทาอ่อน) */
+  --bg-surface: #ffffff;
+  /* สีพื้นหลังกล่อง/การ์ด/Sidebar (ขาว) */
+  --text-main: #111827;
+  /* สีตัวอักษรหลัก (ดำ) */
+  --text-muted: #6b7280;
+  /* สีตัวอักษรรอง (เทา) */
+  --border-color: #e5e7eb;
+  /* สีเส้นขอบ */
+  --hover-bg: #f3f4f6;
+  /* สีตอนเอาเมาส์ชี้ */
+  --toast-bg: #111827;
+  /* สีกล่องแจ้งเตือนปกติ (ดำ) */
+}
+
+/* 🌑 โหมดมืด (Dark Mode) */
+body.dark-mode {
+  --bg-main: #121212;
+  /* สีพื้นหลังเว็บ (ดำลึก) */
+  --bg-surface: #1e1e1e;
+  /* สีพื้นหลังกล่อง/การ์ด/Sidebar (เทาเข้ม) */
+  --text-main: #f9fafb;
+  /* สีตัวอักษรหลัก (ขาว) */
+  --text-muted: #9ca3af;
+  /* สีตัวอักษรรอง (เทาอ่อน) */
+  --border-color: #374151;
+  /* สีเส้นขอบ */
+  --hover-bg: #374151;
+  /* สีตอนเอาเมาส์ชี้ */
+  --toast-bg: #3f3f46;
+  /* สีกล่องแจ้งเตือนปกติ (เทา) */
+}
+
+/* ตั้งค่าให้พื้นหลังเว็บทั้งหมดเปลี่ยนสีแบบนุ่มนวล */
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden; 
+  overflow: hidden;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 📍 กล่องคลุมทั้งแอป เรียงจาก บนลงล่าง (Column) */
@@ -19,17 +60,31 @@ body {
 /* 📍 พื้นที่ด้านล่าง Navbar แบ่ง ซ้าย-ขวา (Row) */
 .main-content {
   display: flex;
-  flex: 1; /* กินความสูงที่เหลือจาก Navbar ทั้งหมด */
-  overflow: hidden; /* ป้องกัน Scrollbar ทะลุกรอบ */
+  flex: 1;
+  /* กินความสูงที่เหลือจาก Navbar ทั้งหมด */
+  overflow: hidden;
+  /* ป้องกัน Scrollbar ทะลุกรอบ */
+}
+
+body,
+.app-container,
+.main-content {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 📍 พื้นที่แสดงผลด้านขวา */
 .workspace {
-  flex: 1; /* กินความกว้างที่เหลือจาก Sidebar */
+  flex: 1;
+  /* กินความกว้างที่เหลือจาก Sidebar */
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 24px;
+  background-color: var(--bg-main);
+  /* 📍 เปลี่ยนจากสีพื้นเดิม (เช่น #f3f4f6) เป็นตัวแปรนี้ */
+  transition: background-color 0.3s ease;
 }
 
 /* กลุ่มปุ่มจำลองประเภท UI */
@@ -42,22 +97,22 @@ body {
 
 .preview-btn {
   padding: 8px 24px;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  color: #1f2937;
-  transition: all 0.2s ease;
 }
 
 .preview-btn:hover {
-  background-color: #f3f4f6;
+  background-color: var(--hover-bg);
 }
 
 .preview-btn.active {
-  background-color: #4b5563;
-  color: white;
-  border-color: #4b5563;
+  background-color: var(--text-main);
+  color: var(--bg-surface);
+  border-color: var(--text-main);
 }

@@ -23,11 +23,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 8px 16px;
     width: 300px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .search-bar input {
@@ -35,7 +36,8 @@
     outline: none;
     width: 100%;
     font-size: 0.95rem;
-    color: #374151;
+    color: var(--text-main);
+    background: transparent;
 }
 
 .filter-dropdowns {
@@ -58,23 +60,24 @@
 
 .select-wrapper select {
     padding: 8px 36px 8px 16px; 
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 20px;
-    background-color: #ffffff;
+    background-color: var(--bg-surface);
     font-size: 0.95rem;
-    color: #4b5563;
+    color: var(--text-main);
     cursor: pointer;
     outline: none;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     white-space: nowrap;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .custom-select-icon {
     position: absolute;
     right: 12px;
-    color: #4b5563;
+    color: var(--text-muted);
     pointer-events: none;
 }
 
@@ -91,26 +94,26 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1.5px solid #d1d5db;
-    background-color: #ffffff;
-    color: #4b5563;
+    border: 1.5px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-main);
 }
 
 .edit-template-btn:hover {
-    background-color: #f3f4f6;
+    background-color: var(--hover-bg);
 }
 
 .edit-template-btn.active {
-    background-color: #111827;
-    color: #ffffff;
-    border-color: #111827;
+    background-color: var(--text-main);
+    color: var(--bg-surface);
+    border-color: var(--text-main);
 }
 
 .delete-template-overlay-btn {
     position: absolute;
     top: 12px;
     right: 12px;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--bg-surface);
     border: none;
     width: 36px;
     height: 36px;
@@ -148,9 +151,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    color: #374151;
+    background-color: var(--hover-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -169,7 +172,7 @@
     justify-content: center;
     background: none;
     border: none;
-    color: #9ca3af;
+    color: var(--text-muted);
     padding: 0;
     cursor: pointer;
     transition: color 0.2s ease;
@@ -190,20 +193,20 @@
 
 .explore-loading {
     text-align: center;
-    color: #6b7280;
+    color: var(--text-muted);
     margin-top: 40px;
 }
 
 /* --- การ์ดจานสี (อิงตามรูป) --- */
 .explore-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 300px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
     position: relative; /* สำคัญสำหรับถังขยะ */
 }
 
@@ -233,7 +236,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end; /* 📍 ปรับให้ชิดขอบล่างของกลุ่ม text */
-    background-color: #ffffff;
+    background-color: transparent;
     gap: 12px;
 }
 
@@ -241,14 +244,14 @@
     margin: 0 0 4px 0;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--text-main);
     word-break: break-word; /* กันชื่อยาว */
 }
 
 .explore-text p {
     margin: 0;
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 /* 📍 1. จัดกลุ่ม Action: Badge, Likes, Use Buttons (เพิ่มใหม่) */
@@ -262,7 +265,7 @@
 
 /* 📍 2. ปรับสไตล์ Badge สำหรับตำแหน่งใหม่ (NEW) */
 .template-badge {
-    background-color: #dbeafe; /* สีฟ้าอ่อน */
+    background-color: #dbeafe; /* สีฟ้าอ่อน คงไว้เพื่อให้เป็นจุดเด่น */
     color: #1d4ed8; /* สีน้ำเงินเข้ม */
     font-size: 0.65rem;
     font-weight: 700;
@@ -278,16 +281,17 @@
     display: flex;
     align-items: center;
     gap: 6px; /* ระยะห่างระหว่างปุ่ม Like ตัวเลข และปุ่ม Folder */
-    background-color: #f4f4f5; /* เทาอ่อนเบาๆ ให้ดูเป็นกลุ่ม */
+    background-color: var(--hover-bg); /* เปลี่ยนตามโหมด */
     padding: 4px 10px;
     border-radius: 20px;
+    transition: background-color 0.3s ease;
 }
 
-.like-btn, .add-to-collection-btn {
+.like-btn, .add-to-collection-btn, .preview-palette-btn {
     background: none;
     border: none;
     cursor: pointer;
-    color: #111827;
+    color: var(--text-main);
     padding: 0;
     display: flex;
     align-items: center;
@@ -305,42 +309,16 @@
     transform: scale(1.1);
 }
 
+.preview-palette-btn:hover {
+    color: #be123c; 
+    transform: scale(1.1);
+}
+
 .explore-likes-group span {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--text-main);
     min-width: 14px; /* กันตัวเลขขยับหน้าเว็บ */
     text-align: center;
     transform: translateY(-0.5px); /* จัดกึ่งกลางบรรทัด */
-}
-
-.like-btn, .preview-palette-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #111827;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.like-btn:hover {
-    color: #e11d48; /* สีแดงตอน Hover */
-    transform: scale(1.1);
-}
-
-.preview-palette-btn:hover {
-    color: #be123c; /* สีแดงเข้ม หรือเปลี่ยนเป็น #2563eb สีน้ำเงินก็ได้ครับ */
-    transform: scale(1.1);
-}
-
-.explore-likes-group span {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #374151;
-    min-width: 14px; 
-    text-align: center;
-    transform: translateY(-0.5px); 
 }

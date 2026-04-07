@@ -775,7 +775,7 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => 
                         onClick={() => setShowAllColorsPanel(!showAllColorsPanel)}
                     >
                         {showAllColorsPanel ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-                        {showAllColorsPanel ? "ซ่อนหน้าต่างสีทั้งหมด" : `ดูสีทั้งหมดที่ดึงได้ (${allExtractedColors.length} สี)`}
+                        {showAllColorsPanel ? "Hide the colors panel" : `Extracted color set (${allExtractedColors.length} colors)`}
                     </button>
                 )}
 
@@ -935,7 +935,7 @@ const ImageSidebar = ({ paletteToEdit, onExitEditingMode, isAdmin, userId }) => 
             {showAllColorsPanel && (
                 <div className="all-colors-panel">
                     <div className="all-colors-header">
-                        <h4>🎨 สีทั้งหมดที่ดึงได้</h4>
+                        <h4>Extracted color set</h4>
                         <button className="all-colors-close-btn" onClick={() => setShowAllColorsPanel(false)}>
                             <X size={18} />
                         </button>

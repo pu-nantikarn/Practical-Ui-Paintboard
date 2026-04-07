@@ -3,6 +3,7 @@
 .preview-component-wrapper {
     display: block; /* 📍 เปลี่ยนจาก flex เป็น block เพื่อแก้ปัญหา scroll กินขอบด้านล่าง */
     padding: 40px 40px 80px 40px; /* 📍 เพิ่ม Padding ด้านล่าง (80px) เผื่อพื้นที่ให้เลื่อนได้สุด */
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
     overflow-y: auto;

@@ -1,4 +1,6 @@
 /* ไฟล์: src/components/Navbar.css */
+/* --- โครงสร้างหลัก --- */
+/* ไฟล์: src/components/Navbar.css */
 
 /* --- โครงสร้างหลัก --- */
 .navbar {
@@ -6,15 +8,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 36px;
-  background-color: #ffffff; /* สีพื้นหลังโทนเทาอ่อนตามภาพ */
-    border-bottom: 1px solid #d6d6d6;
+  background-color: var(--bg-surface); /* 📍 ใช้ตัวแปร */
+  border-bottom: 1px solid var(--border-color); /* 📍 ใช้ตัวแปร */
   font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .navbar-brand {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #000;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
   white-space: nowrap;
 }
 
@@ -29,7 +32,7 @@
 .toggle-container {
     position: relative;
     display: flex;
-    background-color: #e5e7eb;
+    background-color: var(--hover-bg); /* 📍 ใช้ตัวแปร */
     border-radius: 10px;
     padding: 4px;
     width: 100%;
@@ -43,10 +46,10 @@
     bottom: 4px;
     left: 4px;
     width: calc(50% - 4px);
-    background-color: #ffffff;
+    background-color: var(--bg-surface); /* 📍 ใช้ตัวแปร */
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease;
     z-index: -1;
 }
 
@@ -58,19 +61,18 @@
   flex: 1;
   padding: 6px 0;
   border: none;
-  background: transparent !important; /* ลบสีพื้นหลังของปุ่มทิ้ง เพราะเราใช้ก้อน .slide-bg แทนแล้ว */
+  background: transparent !important;
   font-weight: 500;
   font-size: 0.95rem;
   text-align: center;
   cursor: pointer;
-  color: #6b7280; /* สีตัวหนังสือตอนยังไม่กด (สีเทา) */
-  transition: color 0.3s ease; /* ให้สีข้อความค่อยๆ เปลี่ยนอย่างนุ่มนวล */
+  color: var(--text-muted); /* 📍 ใช้ตัวแปร */
+  transition: color 0.3s ease;
 }
 
 .toggle-btn.active {
-    background-color: #ffffff;
-    color: #000;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: transparent; /* ให้ slide-bg ทำหน้าที่แสดงสีพื้นหลังแทน */
+    color: var(--text-main); /* 📍 ใช้ตัวแปร */
 }
 
 /* --- โซนขวา: ปุ่มเครื่องมือ --- */
@@ -84,19 +86,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #e5e7eb;
+  background-color: var(--hover-bg); /* 📍 ใช้ตัวแปร */
   border: none;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  color: #4b5563;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
   transition: background 0.2s;
-}
-
-.vision-btn:hover {
-  background-color: #d1d5db;
 }
 
 .icon-btn {
@@ -109,7 +107,7 @@
   width: 32px;
   height: 32px;
   padding: 4px;
-  color: #000;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
 }
 
 .profile-btn {
@@ -117,28 +115,22 @@
   height: 32px;
   padding: 4px;
   flex-shrink: 0; 
-  
-  /* จัดให้อยู่กึ่งกลาง */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* กันรูปทะลุกรอบ */
+  overflow: hidden;
 }
 
 .profile-trigger-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f3f4f6; /* สีพื้นหลังอ่อนๆ ให้ดูเป็นปุ่ม */
-  border: 1px solid #e5e7eb;
+  background: var(--hover-bg); /* 📍 ใช้ตัวแปร */
+  border: 1px solid var(--border-color); /* 📍 ใช้ตัวแปร */
   padding: 4px 8px;
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.2s;
-}
-
-.profile-trigger-btn:hover {
-  background-color: #e5e7eb;
 }
 
 .profile-img-nav {
@@ -151,7 +143,7 @@
 .profile-name-nav {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -159,7 +151,7 @@
 }
 
 .chevron-icon {
-  color: #6b7280;
+  color: var(--text-muted); /* 📍 ใช้ตัวแปร */
   transition: transform 0.2s;
 }
 
@@ -170,44 +162,19 @@
 /* =========================================
    Responsive Design (ปรับตามขนาดหน้าจอ)
    ========================================= */
-
-/* สำหรับหน้าจอ Tablet (ย่อลงมานิดหน่อย) */
 @media (max-width: 768px) {
-  .navbar {
-    padding: 12px 16px;
-  }
-  
-  /* ซ่อนคำว่า "Normal Vision" เหลือแค่ไอคอนดวงตา เพื่อประหยัดพื้นที่ */
-  .vision-text {
-    display: none;
-  }
-  
-  .navbar-right {
-    gap: 12px;
-  }
+  .navbar { padding: 12px 16px; }
+  .vision-text { display: none; }
+  .navbar-right { gap: 12px; }
 }
 
-/* สำหรับหน้าจอ Mobile (จอเล็กมาก) */
 @media (max-width: 480px) {
-  .navbar {
-    flex-wrap: wrap; /* ยอมให้แถวแตกขึ้นบรรทัดใหม่ได้ */
-    gap: 12px;
-  }
-  
-  /* ดันส่วนตรงกลาง (Toggle) ลงมาอยู่บรรทัดที่ 2 และขยายเต็มจอ */
-  .navbar-center {
-    order: 3;
-    width: 100%;
-  }
-  
-  .toggle-container {
-    width: 100%;
-  }
-  
-  .toggle-btn {
-    flex: 1; /* ยืดปุ่ม Generate/Image ให้กว้างเท่าๆ กัน */
-  }
+  .navbar { flex-wrap: wrap; gap: 12px; }
+  .navbar-center { order: 3; width: 100%; }
+  .toggle-container { width: 100%; }
+  .toggle-btn { flex: 1; }
 }
+
 /* =========================================
    Profile Dropdown Menu
    ========================================= */
@@ -219,11 +186,11 @@
 
 .profile-dropdown {
   position: absolute;
-  top: calc(100% + 14px); /* ให้ลอยอยู่ใต้ปุ่มโปรไฟล์นิดนึง */
+  top: calc(100% + 14px);
   right: -5px;
-  background-color: #ffffff;
-  border: 1px solid #e6e6e6;
-  border-radius: 10px; /* ขอบมนแบบในรูป */
+  background-color: var(--bg-surface); /* 📍 ใช้ตัวแปร */
+  border: 1px solid var(--border-color); /* 📍 ใช้ตัวแปร */
+  border-radius: 10px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   min-width: 200px;
   padding: 8px 8px;
@@ -235,35 +202,34 @@
 .dropdown-item {
   display: flex;
   align-items: center;
-  justify-content: center; /* จัดเนื้อหาให้อยู่ตรงกลาง */
+  justify-content: center;
   gap: 10px;
   padding: 8px 80px;
   background: none;
   border: none;
   width: 100%;
   text-align: center;
-  font-size: 1 rem;
-  font-weight: 600; /* ตัวหนาขึ้นนิดนึงให้เหมือนรูป */
-  color: #000;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
   cursor: pointer;
   transition: background-color 0.2s;
   white-space: nowrap;
 }
 
 .dropdown-item:hover {
-  background-color: #f3f4f6; /* สีเทาอ่อนเวลาเอาเมาส์ชี้ */
+  background-color: var(--hover-bg); /* 📍 ใช้ตัวแปร */
 }
 
 .logout-text {
-  color: #ef4444; /* สีแดงสำหรับปุ่ม Log-out */
+  color: #ef4444 !important; /* บังคับเป็นสีแดง */
   justify-content: center;
 }
 
-/* เส้นคั่นตรงกลาง */
 .dropdown-divider {
   height: 1px;
-  background-color: #d1d5db;
-  margin: 6px 24px; /* ระยะห่างเส้นคั่นซ้าย-ขวา */
+  background-color: var(--border-color); /* 📍 ใช้ตัวแปร */
+  margin: 6px 24px;
 }
 
 .dropdown-user-info {
@@ -277,7 +243,7 @@
 
 .dropdown-user-name {
   font-weight: 700;
-  color: #111827;
+  color: var(--text-main); /* 📍 ใช้ตัวแปร */
   font-size: 0.95rem;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -285,26 +251,24 @@
 
 .dropdown-user-email {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--text-muted); /* 📍 ใช้ตัวแปร */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* =========================================
-   Explore Button (เพิ่มใหม่)
+   Explore Button
    ========================================= */
-
-/* สถานะปกติ (ปุ่มแคปซูลขอบมน มีกรอบเหมือนในรูป) */
 .explore-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   background-color: transparent;
   border: none; 
-  color: #4b5563; /* สีตัวหนังสือ/ไอคอน */
+  color: var(--text-muted); /* 📍 ใช้ตัวแปร */
   padding: 6px 16px;
-  border-radius: 999px; /* ทรงแคปซูล */
+  border-radius: 999px;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -313,52 +277,47 @@
 }
 
 .explore-btn:hover {
-  background-color: #f3f4f6; /* โฮเวอร์แล้วเทาอ่อนๆ */
+  background-color: var(--hover-bg); /* 📍 ใช้ตัวแปร */
 }
 
-/* สถานะ Active (สีพื้นเทาเข้ม ตัวหนังสือสีขาว) */
 .explore-btn.active {
-  background-color: #3f3f46; /* สีเทาเข้ม */
-  border-color: #3f3f46;
-  color: #ffffff;
-  cursor: default; /* เปลี่ยนเคอร์เซอร์เป็นปกติเพราะไม่ได้ให้กดที่ตัวปุ่มแล้ว */
+  background-color: var(--text-main); /* 📍 ใช้ตัวแปร */
+  border-color: var(--text-main); /* 📍 ใช้ตัวแปร */
+  color: var(--bg-surface); /* 📍 ใช้ตัวแปร */
+  cursor: default;
 }
 
-/* ปุ่มกากบาท (X) ด้านหลังข้อความ */
 .close-explore-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  color: #a1a1aa; /* สีกากบาทแบบยังไม่โฮเวอร์ */
+  color: var(--text-muted); /* 📍 ใช้ตัวแปร */
   padding: 2px;
-  margin-left: 6px; /* ดันให้ห่างจากคำว่า Explore */
-  margin-right: -6px; /* ชดเชยขอบขวาให้ปุ่ม X ดูสมดุล */
+  margin-left: 6px;
+  margin-right: -6px;
   cursor: pointer;
   border-radius: 50%;
   transition: all 0.2s ease;
 }
 
 .close-explore-btn:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--bg-surface);
+  background-color: var(--text-main);
 }
 
 .explore-btn span {
-  transform: translateY(-1.5px); /* ค่าติดลบคือขยับขึ้น (ถ้ายังไม่ตรงปรับเป็น -1px หรือ -2px ได้ครับ) */
+  transform: translateY(-1.5px);
   line-height: 1;
 }
 
-/* =========================================
-   Admin Badge
-   ========================================= */
 .admin-badge {
   display: flex;
   align-items: center;
   gap: 3px;
-  background-color: #fee2e2; /* พื้นหลังสีแดงอ่อน */
-  color: #dc2626; /* ตัวหนังสือสีแดงเข้ม */
+  background-color: #fee2e2;
+  color: #dc2626;
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.65rem;
@@ -369,4 +328,3 @@
   letter-spacing: 0.5px;
   user-select: none;
 }
-

@@ -1,6 +1,6 @@
 // ไฟล์: src/frontend/Navbar.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, User, Palette, ChevronDown, Compass, X, ShieldCheck } from 'lucide-react';
+import { Moon, User, Palette, ChevronDown, Compass, X, ShieldCheck, Sun } from 'lucide-react';
 import './Navbar.css';
 import { supabase } from '../backend/supabaseClient';
 
@@ -9,7 +9,30 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette, isExploreMode, setIsEx
     const [user, setUser] = useState(null);
     const [dbUser, setDbUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const dropdownRef = useRef(null);
+
+    // 📍 2. ดึงค่าจาก localStorage ตอนโหลดเว็บครั้งแรก
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setIsDarkMode(true);
+            document.body.classList.add('dark-mode'); // ยัด class 'dark-mode' เข้าไปที่ tag <body>
+        }
+    }, []);
+
+    // 📍 3. ฟังก์ชันสำหรับกดสลับโหมด
+    const toggleTheme = () => {
+        if (isDarkMode) {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+            setIsDarkMode(false);
+        } else {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            setIsDarkMode(true);
+        }
+    };
 
     const syncUserToDB = async (authUser) => {
         if (!authUser) return;
@@ -148,10 +171,9 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette, isExploreMode, setIsEx
                             <span>Explore</span>
                         </button>
                     )}
-                    <button className="icon-btn">
-                        <Moon size={20} fill="currentColor" />
+                    <button className="icon-btn" onClick={toggleTheme}>
+                        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-
                     {user ? (
                         <div className="profile-container" ref={dropdownRef}>
                             <button

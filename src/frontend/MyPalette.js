@@ -8,6 +8,60 @@ import {
 import { supabase } from '../backend/supabaseClient';
 import './MyPalette.css';
 
+// ==========================================
+// 🛠️ Color Math Helpers (เพิ่มเข้ามาเพื่อช่วยแยกสี Neutral ออกจากการ์ด)
+// ==========================================
+const hexToRgb = (hex) => {
+    let v = hex.replace('#', '');
+    if (v.length === 3) v = v.split('').map(c => c + c).join('');
+    return { r: parseInt(v.slice(0, 2), 16) || 0, g: parseInt(v.slice(2, 4), 16) || 0, b: parseInt(v.slice(4, 6), 16) || 0 };
+};
+const rgbToHex = (r, g, b) => [r, g, b].map(x => Math.max(0, Math.min(255, Number(x || 0))).toString(16).padStart(2, '0')).join('').toUpperCase();
+const rgbToHsl = (r, g, b) => {
+    r /= 255; g /= 255; b /= 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; default: break; }
+        h /= 6;
+    }
+    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+};
+const hslToRgb = (h, s, l) => {
+    h /= 360; s /= 100; l /= 100;
+    let r, g, b;
+    if (s === 0) r = g = b = l;
+    else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1; if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p;
+        };
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+};
+const generateNeutralShades = (primaryHex) => {
+    const baseColor = (primaryHex && primaryHex.length === 6) ? primaryHex : '8B5CF6';
+    const { r, g, b } = hexToRgb(baseColor);
+    const baseHsl = rgbToHsl(r, g, b);
+    const tintSaturation = baseHsl.s === 0 ? 0 : 4;
+    const maxLightness = 98;
+    const minLightness = 5;
+    const shades = [];
+    for (let i = 0; i <= 10; i++) {
+        let progress = i / 10;
+        let easedProgress = Math.pow(progress, 1.3);
+        let lightness = maxLightness - (easedProgress * (maxLightness - minLightness));
+        const rgb = hslToRgb(baseHsl.h, tintSaturation, lightness);
+        shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
+    }
+    return shades;
+};
+
 const MyPalette = ({ isOpen, onClose, userId, onSelectPalette }) => {
     const [loading, setLoading] = useState(true);
     const [collections, setCollections] = useState([]);
@@ -540,10 +594,27 @@ const PaletteCard = ({ palette, onDelete, onDragStart, onDragEnter, onDragEnd, o
     const sortedColors = (palette.paletteDetail || [])
         .sort((a, b) => a.order_index - b.order_index);
 
-    let displayColors = sortedColors.filter(detail => String(detail.role_id) !== '3');
+    let displayColors = [];
+    
+    if (sortedColors.length > 0) {
+        const primaryHex = sortedColors[0].color?.hex_value?.replace('#', '').toUpperCase() || 'FFFFFF';
+        const autoNeutrals = generateNeutralShades(primaryHex).map(c => c.toUpperCase());
 
-    if (displayColors.length > 6) {
-        displayColors = displayColors.slice(0, 6);
+        for (let i = 0; i < sortedColors.length; i++) {
+            const detail = sortedColors[i];
+            const hex = detail.color?.hex_value?.replace('#', '').toUpperCase();
+            
+            if (String(detail.role_id) === '3') continue;
+
+            // 📍 กรองสีขยะ: ถ้าเริ่มดึงเจอสีโทน Neutral ให้หยุดดึงใส่การ์ดทันที
+            if (i > 0 && hex && (hex === autoNeutrals[0] || hex === autoNeutrals[1] || hex === autoNeutrals[2])) {
+                break; 
+            }
+
+            if (displayColors.length < 6) {
+                displayColors.push(detail);
+            }
+        }
     }
 
     const handleTogglePublic = async (e) => {

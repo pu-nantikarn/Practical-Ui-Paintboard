@@ -754,7 +754,7 @@ input[type=range].slider::-moz-range-thumb {
 .edit-mode-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-main); 
+  color: var(--text-main) !important; 
   
   transition: color 0.3s ease;
 }
@@ -763,16 +763,16 @@ input[type=range].slider::-moz-range-thumb {
   font-size: 0.8rem;
   padding: 6px 10px;
   border-radius: 6px;
-  background: var(--hover-bg); 
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
+  background: var(--hover-bg) !important; 
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
 }
 
 .exit-edit-btn:hover {
-  background: var(--border-color);
+  background: var(--border-color)!important ;
 }
 
 /* ปรับปรุงพื้นที่ว่าง (Empty Slot) ใน Secondary */

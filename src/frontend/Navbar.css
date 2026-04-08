@@ -23,23 +23,35 @@
 }
 
 /* --- โซนกลาง: Toggle สลับโหมด --- */
+/* 📍 อัปเดตคลาส .navbar-center ใหม่ทั้งหมด */
 .navbar-center {
+  /* 🟢 เปลี่ยนจากการใช้ flex: 1 มาเป็นการลอยตัวอยู่ตรงกลางจอ */
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  
   display: flex;
   justify-content: center;
-  flex: 1;
-  padding: 0 16px;
+  width: 100%;
+  max-width: 332px;
+  padding: 0;
+  
+  /* 🟢 ให้ทะลุการคลิก เพื่อป้องกันการบัง Navbar */
+  pointer-events: none !important; 
+  z-index: 10 !important;
 }
 
+/* 📍 อัปเดตคลาส .toggle-container */
 .toggle-container {
   position: relative;
   display: flex;
   background-color: var(--hover-bg);
-  /* 📍 ใช้ตัวแปร */
   border-radius: 10px;
   padding: 4px;
   width: 100%;
-  max-width: 332px;
   z-index: 1;
+  /* 🟢 สำคัญมาก: คืนค่าให้ตัวปุ่มสลับโหมดกลับมากดได้ */
+  pointer-events: auto !important; 
 }
 
 .slide-bg {
@@ -81,13 +93,13 @@
   /* 📍 ใช้ตัวแปร */
 }
 
-/* --- โซนขวา: ปุ่มเครื่องมือ --- */
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 16px;
   position: relative !important;
-  z-index: 2147483647 !important;
+  /* 🟢 บังคับให้อยู่เลเยอร์สูงที่สุด เหนือกล่องตรงกลางแน่นอน */
+  z-index: 9999 !important; 
   flex-shrink: 0 !important;
   pointer-events: auto !important;
 }

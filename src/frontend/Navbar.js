@@ -158,13 +158,13 @@ const Navbar = ({ activeTab, setActiveTab, openMyPalette, isExploreMode, setIsEx
 
                 <div className="navbar-right">
                     {isExploreMode ? (
-                        <div className="explore-btn active">
+                        <button className="explore-btn active" onClick={handleCloseExplore}>
                             <Compass size={18} />
                             <span>Explore</span>
-                            <button className="close-explore-btn" onClick={handleCloseExplore} title="Close Explore">
+                            <div className="close-explore-btn" title="Close Explore">
                                 <X size={16} />
-                            </button>
-                        </div>
+                            </div>
+                        </button>
                     ) : (
                         <button className="explore-btn" onClick={handleExploreClick}>
                             <Compass size={18} />
